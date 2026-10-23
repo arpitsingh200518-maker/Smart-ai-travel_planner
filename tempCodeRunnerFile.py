@@ -1,0 +1,1 @@
+"""Interactive console entry point for Smart AI Travel Planner."""
