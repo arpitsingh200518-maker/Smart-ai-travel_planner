@@ -14,7 +14,7 @@ from tkinter import ttk, messagebox, font as tkfont
 from pathlib import Path
 
 try:
-    from PIL import Image, ImageTk, ImageEnhance
+    from PIL import Image, ImageTk, ImageEnhance, ImageDraw, ImageFilter
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -34,9 +34,12 @@ from travel.map_builder import build_map
 BG_DEEP       = "#0a0c10"       # midnight deep base
 BG_SURFACE    = "#11141c"       # dark slate surface
 BG_CARD       = "#161a24"       # card background
-BG_CARD_SOLID = "#131620"       # solid card base
+BG_CARD_SOLID = "#080b14"       # frosted glass base (matches glass panel overlay)
 BG_ELEVATED   = "#1e2434"       # elevated panels
-BG_INPUT      = "#0b0e14"       # input fields
+BG_INPUT      = "#0d1120"       # input fields (frosted tint)
+GLASS_BG      = "#080b14"       # glass panel pixel color (matches PIL overlay)
+GLASS_INNER   = "#0c1018"       # inner section inside glass
+GLASS_HOVER   = "#121828"       # hover inside glass
 ACCENT_RED    = "#e53935"       # primary red accent
 ACCENT_CRIM   = "#ff1744"       # bright crimson highlight
 ACCENT_DARK   = "#b71c1c"       # deep red
@@ -50,7 +53,7 @@ TEXT_PRIMARY  = "#f8fafc"       # near-white text (slate-50)
 TEXT_SECONDARY= "#94a3b8"       # clean muted text (slate-400)
 TEXT_MUTED    = "#64748b"       # very muted text (slate-500)
 BORDER        = "#252d3d"       # subtle dark border
-BORDER_LIGHT  = "#333f54"       # highlighted card border
+BORDER_LIGHT  = "#e53935"       # glass card border (crimson accent)
 HOVER         = "#2d161a"       # hover with red tint
 ACCENT_LIME   = ACCENT_RED
 
@@ -146,10 +149,18 @@ class TravelPlannerApp(tk.Tk):
         threading.Thread(target=self._init_engine, daemon=True).start()
 
     # ═══════════════════════════════════════════════════════════════════════
-    #  IMAGE COVER GENERATOR
+    #  IMAGE COVER GENERATOR  (with frosted-glass panel overlay)
     # ═══════════════════════════════════════════════════════════════════════
-    def _create_cover_image(self, width, height, brightness=0.88):
-        """Scale and center-crop the background image to cover (width, height)."""
+    def _create_cover_image(self, width, height, brightness=0.88,
+                            panels=None, blur_radius=14):
+        """
+        Scale and center-crop the background image to cover (width, height).
+        Optionally composite frosted-glass translucent panels onto the image
+        before converting to PhotoImage.
+
+        panels: list of dicts  { 'x', 'y', 'w', 'h', 'radius', 'alpha' }
+                alpha 0-255, lower = more transparent (default 165)
+        """
         if not HAS_PIL or self._bg_orig is None or width <= 20 or height <= 20:
             return None
         try:
@@ -167,6 +178,47 @@ class TravelPlannerApp(tk.Tk):
             if brightness < 0.99:
                 enhancer = ImageEnhance.Brightness(cropped)
                 cropped = enhancer.enhance(brightness)
+
+            # ── frosted-glass panel compositing ──────────────────────────
+            if panels:
+                base = cropped.convert("RGBA")
+                for p in panels:
+                    px, py = max(0, p["x"]), max(0, p["y"])
+                    pw = min(p["w"], width - px)
+                    ph = min(p["h"], height - py)
+                    if pw <= 0 or ph <= 0:
+                        continue
+                    # 1. Crop the region and blur it for backdrop effect
+                    region = base.crop((px, py, px + pw, py + ph))
+                    blurred = region.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+                    # 2. Darken the blurred region a bit
+                    blurred_rgb = blurred.convert("RGB")
+                    darkener = ImageEnhance.Brightness(blurred_rgb)
+                    blurred_rgb = darkener.enhance(0.45)
+                    # 3. Draw frosted-glass overlay tinted dark navy/slate
+                    panel_rgba = blurred_rgb.convert("RGBA")
+                    glass_fill = (8, 11, 20, p.get("alpha", 165))
+                    overlay = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
+                    draw = ImageDraw.Draw(overlay)
+                    radius = p.get("radius", 10)
+                    if radius > 0:
+                        draw.rounded_rectangle([0, 0, pw, ph], radius=radius, fill=glass_fill)
+                    else:
+                        draw.rectangle([0, 0, pw, ph], fill=glass_fill)
+                    panel_final = Image.alpha_composite(panel_rgba, overlay)
+                    base.paste(panel_final, (px, py))
+
+                # Thin crimson accent line at top of first panel if present
+                if panels:
+                    p0 = panels[0]
+                    draw2 = ImageDraw.Draw(base)
+                    ax0 = max(0, p0["x"])
+                    ax1 = min(ax0 + p0["w"], width)
+                    ay = max(0, p0["y"])
+                    r = p0.get("radius", 10)
+                    draw2.rounded_rectangle([ax0, ay, ax1, ay + 3], radius=r,
+                                            fill=(229, 57, 53, 255))
+                cropped = base.convert("RGB")
 
             return ImageTk.PhotoImage(cropped)
         except Exception:
@@ -326,34 +378,34 @@ class TravelPlannerApp(tk.Tk):
         self.planner_canvas.bind("<Leave>", lambda e: self._unbind_mousewheel(self.planner_canvas))
         self.planner_canvas.bind("<Configure>", self._on_planner_canvas_configure)
 
-        # Floating Main Content Card
-        self.planner_content = tk.Frame(self.planner_canvas, bg=BG_CARD_SOLID,
-                                        highlightbackground=BORDER_LIGHT,
-                                        highlightthickness=1, bd=0)
+        # Floating Main Content Card — transparent frame (bg matches the glass composite)
+        self.planner_content = tk.Frame(self.planner_canvas, bg=GLASS_BG,
+                                        highlightbackground="#e53935",
+                                        highlightthickness=0, bd=0)
         self._planner_win_id = self.planner_canvas.create_window(590, 24, window=self.planner_content,
                                                                  anchor="n", width=1060)
         self.planner_content.bind("<Configure>",
             lambda e: self.planner_canvas.configure(scrollregion=self.planner_canvas.bbox("all")))
 
-        # Top Accent Stripe
-        tk.Frame(self.planner_content, bg=ACCENT_RED, height=3).pack(fill="x")
+        # Top Accent Stripe — drawn by PIL glass compositing, so this frame can be invisible
+        tk.Frame(self.planner_content, bg=GLASS_BG, height=6).pack(fill="x")
 
         # Title Row
-        title_frame = tk.Frame(self.planner_content, bg=BG_CARD_SOLID)
+        title_frame = tk.Frame(self.planner_content, bg=GLASS_BG)
         title_frame.pack(fill="x", padx=24, pady=(18, 12))
 
-        title_left = tk.Frame(title_frame, bg=BG_CARD_SOLID)
+        title_left = tk.Frame(title_frame, bg=GLASS_BG)
         title_left.pack(side="left")
         tk.Label(title_left, text="✦ Where should we go?",
-                 font=self.subheading_font, fg=TEXT_PRIMARY, bg=BG_CARD_SOLID).pack(side="left")
+                 font=self.subheading_font, fg=TEXT_PRIMARY, bg=GLASS_BG).pack(side="left")
         tk.Label(title_left, text="   Discover tailored trips across nature, food, culture & beaches",
-                 font=self.small_font, fg=TEXT_MUTED, bg=BG_CARD_SOLID).pack(side="left", pady=(2, 0))
+                 font=self.small_font, fg=TEXT_MUTED, bg=GLASS_BG).pack(side="left", pady=(2, 0))
 
         tk.Label(title_frame, text="Full dataset · 20 destinations",
-                 font=self.small_font, fg=ACCENT_RED, bg=BG_CARD_SOLID).pack(side="right")
+                 font=self.small_font, fg=ACCENT_RED, bg=GLASS_BG).pack(side="right")
 
         # Form Inputs Grid
-        form = tk.Frame(self.planner_content, bg=BG_CARD_SOLID)
+        form = tk.Frame(self.planner_content, bg=GLASS_BG)
         form.pack(fill="x", padx=24, pady=(0, 14))
 
         for c in range(4):
@@ -397,11 +449,11 @@ class TravelPlannerApp(tk.Tk):
         self._add_entry(form, self.start_var, 3, 3)
 
         # ── Row 4: Buttons ──
-        btn_frame = tk.Frame(form, bg=BG_CARD_SOLID)
+        btn_frame = tk.Frame(form, bg=GLASS_BG)
         btn_frame.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(16, 4))
 
         disclaimer = tk.Label(btn_frame, text="All costs are illustrative estimates — not live fares.",
-                              bg=BG_CARD_SOLID, fg=TEXT_MUTED, font=self.small_font, anchor="w")
+                              bg=GLASS_BG, fg=TEXT_MUTED, font=self.small_font, anchor="w")
         disclaimer.pack(side="left")
 
         self.find_btn = tk.Button(
@@ -413,11 +465,13 @@ class TravelPlannerApp(tk.Tk):
         self.find_btn.pack(side="right")
         self._bind_hover(self.find_btn, ACCENT_DARK, ACCENT_RED)
 
-        # ── Quick presets bar inside the card base ──
-        quick_frame = tk.Frame(self.planner_content, bg=BG_SURFACE, highlightbackground=BORDER,
-                               highlightthickness=1, bd=0)
-        quick_frame.pack(fill="x", padx=0, pady=(6, 0))
-        quick_inner = tk.Frame(quick_frame, bg=BG_SURFACE)
+        # ── separator line ──
+        tk.Frame(self.planner_content, bg="#1e2a40", height=1).pack(fill="x")
+
+        # ── Quick presets bar ──
+        quick_frame = tk.Frame(self.planner_content, bg=GLASS_INNER)
+        quick_frame.pack(fill="x", padx=0, pady=0)
+        quick_inner = tk.Frame(quick_frame, bg=GLASS_INNER)
         quick_inner.pack(fill="x", padx=24, pady=10)
 
         presets = [
@@ -427,31 +481,33 @@ class TravelPlannerApp(tk.Tk):
             ("✈️ International", {"scope": "International", "climate": "Any", "interests": "food, culture, shopping", "days": "5", "budget": "80000"}),
             ("💰 Budget Trip", {"scope": "Either", "climate": "Any", "interests": "nature, food", "days": "3", "budget": "20000"}),
         ]
-        tk.Label(quick_inner, text="Quick presets:", bg=BG_SURFACE, fg=TEXT_MUTED,
+        tk.Label(quick_inner, text="Quick presets:", bg=GLASS_INNER, fg=TEXT_MUTED,
                  font=self.small_font).pack(side="left", padx=(0, 8))
         for label, vals in presets:
             btn = tk.Button(quick_inner, text=label, font=self.small_font,
-                            bg=BG_CARD, fg=TEXT_SECONDARY, relief="flat", bd=0,
+                            bg=GLASS_HOVER, fg=TEXT_SECONDARY, relief="flat", bd=0,
                             padx=11, pady=5, cursor="hand2",
                             command=lambda v=vals: self._apply_preset(v))
             btn.pack(side="left", padx=3)
-            self._bind_hover(btn, BG_ELEVATED, BG_CARD)
+            self._bind_hover(btn, "#1e2a40", GLASS_HOVER)
 
-        # ── Explore Destinations By Vibe (Travel, Food, Nature, Culture) ──
-        vibe_section = tk.Frame(self.planner_content, bg=BG_INPUT, highlightbackground=BORDER,
-                                highlightthickness=1, bd=0)
+        # ── separator line ──
+        tk.Frame(self.planner_content, bg="#1e2a40", height=1).pack(fill="x")
+
+        # ── Explore Destinations By Vibe ──
+        vibe_section = tk.Frame(self.planner_content, bg=GLASS_INNER)
         vibe_section.pack(fill="x", padx=0, pady=0)
-        vibe_inner = tk.Frame(vibe_section, bg=BG_INPUT)
+        vibe_inner = tk.Frame(vibe_section, bg=GLASS_INNER)
         vibe_inner.pack(fill="x", padx=24, pady=14)
 
-        vibe_title_row = tk.Frame(vibe_inner, bg=BG_INPUT)
+        vibe_title_row = tk.Frame(vibe_inner, bg=GLASS_INNER)
         vibe_title_row.pack(fill="x", pady=(0, 10))
         tk.Label(vibe_title_row, text="✦ EXPLORE BY VIBE",
-                 font=("Segoe UI", 9, "bold"), fg=ACCENT_CRIM, bg=BG_INPUT).pack(side="left")
+                 font=("Segoe UI", 9, "bold"), fg=ACCENT_CRIM, bg=GLASS_INNER).pack(side="left")
         tk.Label(vibe_title_row, text="Click any card to load curated travel filters",
-                 font=self.small_font, fg=TEXT_MUTED, bg=BG_INPUT).pack(side="left", padx=(10, 0))
+                 font=self.small_font, fg=TEXT_MUTED, bg=GLASS_INNER).pack(side="left", padx=(10, 0))
 
-        vibes_grid = tk.Frame(vibe_inner, bg=BG_INPUT)
+        vibes_grid = tk.Frame(vibe_inner, bg=GLASS_INNER)
         vibes_grid.pack(fill="x")
         for i in range(4):
             vibes_grid.columnconfigure(i, weight=1, uniform="vibe")
@@ -468,33 +524,35 @@ class TravelPlannerApp(tk.Tk):
         ]
 
         for idx, (v_title, v_desc, v_preset) in enumerate(vibe_cards):
-            v_box = tk.Frame(vibes_grid, bg=BG_CARD, highlightbackground=BORDER,
+            v_box = tk.Frame(vibes_grid, bg=GLASS_HOVER, highlightbackground="#1e2a40",
                              highlightthickness=1, padx=12, pady=10, cursor="hand2")
             v_box.grid(row=0, column=idx, padx=4, sticky="nsew")
 
             t_lbl = tk.Label(v_box, text=v_title, font=("Segoe UI", 10, "bold"),
-                             fg=TEXT_PRIMARY, bg=BG_CARD, anchor="w")
+                             fg=TEXT_PRIMARY, bg=GLASS_HOVER, anchor="w")
             t_lbl.pack(fill="x")
 
             d_lbl = tk.Label(v_box, text=v_desc, font=("Segoe UI", 8),
-                             fg=TEXT_MUTED, bg=BG_CARD, anchor="w", wraplength=210, justify="left")
+                             fg=TEXT_MUTED, bg=GLASS_HOVER, anchor="w", wraplength=210, justify="left")
             d_lbl.pack(fill="x", pady=(4, 6))
 
             a_lbl = tk.Label(v_box, text="Apply vibe →", font=("Segoe UI", 8, "bold"),
-                             fg=ACCENT_RED, bg=BG_CARD, anchor="w")
+                             fg=ACCENT_RED, bg=GLASS_HOVER, anchor="w")
             a_lbl.pack(fill="x")
 
             for widget in (v_box, t_lbl, d_lbl, a_lbl):
                 widget.bind("<Button-1>", lambda e, p=v_preset: self._apply_preset(p))
-                widget.bind("<Enter>", lambda e, b=v_box, t=t_lbl, a=a_lbl: (
-                    b.configure(bg=BG_ELEVATED, highlightbackground=ACCENT_RED),
-                    t.configure(bg=BG_ELEVATED),
-                    a.configure(bg=BG_ELEVATED)
+                widget.bind("<Enter>", lambda e, b=v_box, t=t_lbl, a=a_lbl, dl=d_lbl: (
+                    b.configure(bg="#1e2a40", highlightbackground=ACCENT_RED),
+                    t.configure(bg="#1e2a40"),
+                    dl.configure(bg="#1e2a40"),
+                    a.configure(bg="#1e2a40")
                 ))
-                widget.bind("<Leave>", lambda e, b=v_box, t=t_lbl, a=a_lbl: (
-                    b.configure(bg=BG_CARD, highlightbackground=BORDER),
-                    t.configure(bg=BG_CARD),
-                    a.configure(bg=BG_CARD)
+                widget.bind("<Leave>", lambda e, b=v_box, t=t_lbl, a=a_lbl, dl=d_lbl: (
+                    b.configure(bg=GLASS_HOVER, highlightbackground="#1e2a40"),
+                    t.configure(bg=GLASS_HOVER),
+                    dl.configure(bg=GLASS_HOVER),
+                    a.configure(bg=GLASS_HOVER)
                 ))
 
         # Initial background render
@@ -525,7 +583,15 @@ class TravelPlannerApp(tk.Tk):
         req_h = self.planner_content.winfo_reqheight() if hasattr(self, "planner_content") else h
         total_h = max(h, req_h + 120)
 
-        photo = self._create_cover_image(w, total_h, brightness=0.88)
+        # Frosted glass panel: full-width card sitting on the background
+        pad_x = max(0, (w - min(w - 50, 1080)) // 2)
+        panel_w = min(w - 50, 1080)
+        glass_panels = [
+            {"x": pad_x, "y": 24, "w": panel_w, "h": max(req_h, 400),
+             "radius": 12, "alpha": 160},
+        ]
+
+        photo = self._create_cover_image(w, total_h, brightness=0.96, panels=glass_panels)
         if photo:
             self._planner_photo = photo
             self.planner_canvas.itemconfig(self._planner_bg_id, image=self._planner_photo)
@@ -607,7 +673,12 @@ class TravelPlannerApp(tk.Tk):
         self._results_last_h = h
         req_h = self.results_scroll_frame.winfo_reqheight() if hasattr(self, "results_scroll_frame") else h
         total_h = max(h, req_h + 80)
-        photo = self._create_cover_image(w, total_h, brightness=0.42)
+        # Wide frosted glass panel spanning the results area
+        glass_panels = [
+            {"x": 24, "y": 0, "w": max(w - 48, 200), "h": total_h,
+             "radius": 0, "alpha": 170},
+        ]
+        photo = self._create_cover_image(w, total_h, brightness=0.92, panels=glass_panels)
         if photo:
             self._results_photo = photo
             self.results_canvas.itemconfig(self._results_bg_id, image=self._results_photo)
@@ -684,7 +755,11 @@ class TravelPlannerApp(tk.Tk):
         self._itin_last_h = h
         req_h = self.itin_scroll_frame.winfo_reqheight() if hasattr(self, "itin_scroll_frame") else h
         total_h = max(h, req_h + 80)
-        photo = self._create_cover_image(w, total_h, brightness=0.42)
+        # Full-width frosted panel for itinerary tab
+        glass_panels = [
+            {"x": 0, "y": 0, "w": w, "h": total_h, "radius": 0, "alpha": 170},
+        ]
+        photo = self._create_cover_image(w, total_h, brightness=0.92, panels=glass_panels)
         if photo:
             self._itin_photo = photo
             self.itin_canvas.itemconfig(self._itin_bg_id, image=self._itin_photo)
