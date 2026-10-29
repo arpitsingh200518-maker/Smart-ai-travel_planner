@@ -2,6 +2,7 @@
 Smart AI Travel Planner — Desktop GUI
 Tkinter-based graphical interface that connects to the full recommendation
 engine, budget estimator, itinerary builder and Folium map generator.
+Features an immersive travel, food, and nature visual background.
 """
 import math
 import os
@@ -13,7 +14,7 @@ from tkinter import ttk, messagebox, font as tkfont
 from pathlib import Path
 
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image, ImageTk, ImageEnhance
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -29,27 +30,29 @@ from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map
 
-# ── colour palette ── Black & Red theme ──────────────────────────────────────
-BG_DEEP      = "#0a0a0a"       # near-black base
-BG_SURFACE   = "#121212"       # dark surface
-BG_CARD      = "#1a1a1a"       # card background
-BG_ELEVATED  = "#252525"       # elevated panels
-BG_INPUT     = "#0e0e0e"       # input fields
-ACCENT_RED   = "#e53935"       # primary red accent
-ACCENT_CRIM  = "#ff1744"       # bright crimson highlight
-ACCENT_DARK  = "#b71c1c"       # deep red
-ACCENT_CYAN  = "#ff5252"       # light red (replacing cyan)
-ACCENT_PURPLE= "#ff8a80"       # salmon pink
-ACCENT_ROSE  = "#ff6b8a"       # rose
-ACCENT_AMBER = "#ff9100"       # amber/orange for warnings
-TEXT_PRIMARY  = "#f5f5f5"      # near-white text
-TEXT_SECONDARY= "#9e9e9e"     # muted grey text
-TEXT_MUTED    = "#616161"      # very muted text
-BORDER       = "#2a2a2a"       # subtle dark border
-HOVER        = "#2d1515"       # hover with red tint
-
-# ── backward compat alias ────────────────────────────────────────────────────
-ACCENT_LIME  = ACCENT_RED      # all old ACCENT_LIME refs now use red
+# ── colour palette ── Modern Dark Slate with Crimson & Nature Accents ────────
+BG_DEEP       = "#0a0c10"       # midnight deep base
+BG_SURFACE    = "#11141c"       # dark slate surface
+BG_CARD       = "#161a24"       # card background
+BG_CARD_SOLID = "#131620"       # solid card base
+BG_ELEVATED   = "#1e2434"       # elevated panels
+BG_INPUT      = "#0b0e14"       # input fields
+ACCENT_RED    = "#e53935"       # primary red accent
+ACCENT_CRIM   = "#ff1744"       # bright crimson highlight
+ACCENT_DARK   = "#b71c1c"       # deep red
+ACCENT_CYAN   = "#ff5252"       # light red
+ACCENT_PURPLE = "#ff8a80"       # salmon pink
+ACCENT_ROSE   = "#ff6b8a"       # rose
+ACCENT_AMBER  = "#ff9100"       # amber/orange for warnings
+ACCENT_EMERALD= "#10b981"       # nature emerald
+ACCENT_GOLD   = "#f59e0b"       # food golden
+TEXT_PRIMARY  = "#f8fafc"       # near-white text (slate-50)
+TEXT_SECONDARY= "#94a3b8"       # clean muted text (slate-400)
+TEXT_MUTED    = "#64748b"       # very muted text (slate-500)
+BORDER        = "#252d3d"       # subtle dark border
+BORDER_LIGHT  = "#333f54"       # highlighted card border
+HOVER         = "#2d161a"       # hover with red tint
+ACCENT_LIME   = ACCENT_RED
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 def money(n):
@@ -76,7 +79,7 @@ class TravelPlannerApp(tk.Tk):
         super().__init__()
         self.title("Smart AI Travel Planner")
         self.geometry("1180x820")
-        self.minsize(900, 650)
+        self.minsize(940, 680)
         self.configure(bg=BG_DEEP)
         self.iconname("Smart Travel")
 
@@ -88,7 +91,7 @@ class TravelPlannerApp(tk.Tk):
         self.selected_index = None
 
         # ── fonts ────────────────────────────────────────────────────────────
-        self.heading_font   = tkfont.Font(family="Segoe UI", size=22, weight="bold")
+        self.heading_font   = tkfont.Font(family="Segoe UI", size=20, weight="bold")
         self.subheading_font= tkfont.Font(family="Segoe UI", size=14, weight="bold")
         self.label_font     = tkfont.Font(family="Segoe UI", size=10, weight="bold")
         self.body_font      = tkfont.Font(family="Segoe UI", size=10)
@@ -100,16 +103,32 @@ class TravelPlannerApp(tk.Tk):
         self.btn_font       = tkfont.Font(family="Segoe UI", size=11, weight="bold")
         self.menu_font      = tkfont.Font(family="Segoe UI", size=10)
 
-        # ── banner image ──────────────────────────────────────────────────────
-        self._banner_photo = None
-        banner_path = ROOT / "artifacts" / "travel_banner.jpg"
-        if HAS_PIL and banner_path.exists():
+        # ── travel / nature / food background assets ─────────────────────────
+        self._bg_orig = None
+        bg_path = ROOT / "artifacts" / "travel_bg.jpg"
+        if not bg_path.exists():
+            bg_path = ROOT / "artifacts" / "travel_banner.jpg"
+        if HAS_PIL and bg_path.exists():
             try:
-                img = Image.open(banner_path)
-                img = img.resize((1180, 160), Image.LANCZOS)
-                self._banner_photo = ImageTk.PhotoImage(img)
+                self._bg_orig = Image.open(bg_path).convert("RGB")
             except Exception:
-                pass  # fall back gracefully
+                self._bg_orig = None
+
+        # Background resize caches
+        self._planner_photo = None
+        self._planner_last_w = 0
+        self._planner_last_h = 0
+        self._planner_resize_job = None
+
+        self._results_photo = None
+        self._results_last_w = 0
+        self._results_last_h = 0
+        self._results_resize_job = None
+
+        self._itin_photo = None
+        self._itin_last_w = 0
+        self._itin_last_h = 0
+        self._itin_resize_job = None
 
         # ── style ttk ───────────────────────────────────────────────────────
         self.style = ttk.Style(self)
@@ -125,6 +144,33 @@ class TravelPlannerApp(tk.Tk):
         # ── load data + train model in background ────────────────────────────
         self._show_status("Loading data and training model…")
         threading.Thread(target=self._init_engine, daemon=True).start()
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  IMAGE COVER GENERATOR
+    # ═══════════════════════════════════════════════════════════════════════
+    def _create_cover_image(self, width, height, brightness=0.88):
+        """Scale and center-crop the background image to cover (width, height)."""
+        if not HAS_PIL or self._bg_orig is None or width <= 20 or height <= 20:
+            return None
+        try:
+            img = self._bg_orig
+            img_w, img_h = img.size
+            scale = max(width / img_w, height / img_h)
+            new_w = max(width, int(img_w * scale))
+            new_h = max(height, int(img_h * scale))
+            resized = img.resize((new_w, new_h), Image.BICUBIC)
+
+            x_offset = max(0, (new_w - width) // 2)
+            y_offset = max(0, (new_h - height) // 2)
+            cropped = resized.crop((x_offset, y_offset, x_offset + width, y_offset + height))
+
+            if brightness < 0.99:
+                enhancer = ImageEnhance.Brightness(cropped)
+                cropped = enhancer.enhance(brightness)
+
+            return ImageTk.PhotoImage(cropped)
+        except Exception:
+            return None
 
     # ═══════════════════════════════════════════════════════════════════════
     #  STYLES
@@ -167,8 +213,8 @@ class TravelPlannerApp(tk.Tk):
 
         # Notebook
         s.configure("TNotebook", background=BG_DEEP, borderwidth=0)
-        s.configure("TNotebook.Tab", background=BG_CARD, foreground=TEXT_SECONDARY,
-                     padding=[16, 8], font=self.label_font)
+        s.configure("TNotebook.Tab", background=BG_SURFACE, foreground=TEXT_SECONDARY,
+                     padding=[20, 9], font=self.label_font)
         s.map("TNotebook.Tab",
               background=[("selected", BG_ELEVATED)],
               foreground=[("selected", ACCENT_CRIM)])
@@ -218,25 +264,26 @@ class TravelPlannerApp(tk.Tk):
     #  UI LAYOUT
     # ═══════════════════════════════════════════════════════════════════════
     def _build_ui(self):
-        # ── banner image ─────────────────────────────────────────────────────
-        if self._banner_photo:
-            banner_label = tk.Label(self, image=self._banner_photo, bg=BG_DEEP, bd=0)
-            banner_label.pack(fill="x", padx=0, pady=0)
-
         # ── top header ───────────────────────────────────────────────────────
-        header = ttk.Frame(self, style="Surface.TFrame")
+        header = tk.Frame(self, bg=BG_SURFACE, highlightbackground=BORDER, highlightthickness=1)
         header.pack(fill="x", padx=0, pady=0)
-        header_inner = ttk.Frame(header, style="Surface.TFrame")
-        header_inner.pack(fill="x", padx=24, pady=14)
-        ttk.Label(header_inner, text="✦ Smart AI Travel Planner",
-                  style="Heading.TLabel").pack(side="left")
-        self.model_label = ttk.Label(header_inner, text="Engine: initialising…",
-                                     style="StatusBar.TLabel")
+        header_inner = tk.Frame(header, bg=BG_SURFACE)
+        header_inner.pack(fill="x", padx=24, pady=12)
+
+        brand_box = tk.Frame(header_inner, bg=BG_SURFACE)
+        brand_box.pack(side="left")
+        tk.Label(brand_box, text="✦ Smart AI Travel Planner",
+                 font=self.heading_font, fg=ACCENT_CRIM, bg=BG_SURFACE).pack(side="left")
+        tk.Label(brand_box, text="  ·  Travel · Food · Nature · Adventure",
+                 font=self.small_font, fg=TEXT_MUTED, bg=BG_SURFACE).pack(side="left", padx=(8, 0), pady=(3, 0))
+
+        self.model_label = tk.Label(header_inner, text="Engine: initialising…",
+                                    font=self.small_font, fg=TEXT_MUTED, bg=BG_SURFACE)
         self.model_label.pack(side="right")
 
         # ── notebook (tabs) ──────────────────────────────────────────────────
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=16, pady=(8, 0))
+        self.notebook.pack(fill="both", expand=True, padx=14, pady=(6, 0))
 
         # Tab 1: Planner
         self.planner_tab = ttk.Frame(self.notebook)
@@ -254,37 +301,65 @@ class TravelPlannerApp(tk.Tk):
         self._build_itinerary_tab()
 
         # ── status bar ───────────────────────────────────────────────────────
-        status_frame = ttk.Frame(self, style="Surface.TFrame")
+        status_frame = tk.Frame(self, bg=BG_SURFACE, highlightbackground=BORDER, highlightthickness=1)
         status_frame.pack(fill="x", padx=0, pady=0)
         self.status_var = tk.StringVar(value="Ready")
-        ttk.Label(status_frame, textvariable=self.status_var,
-                  style="StatusBar.TLabel").pack(side="left", padx=16, pady=6)
+        tk.Label(status_frame, textvariable=self.status_var, font=self.small_font,
+                 fg=TEXT_MUTED, bg=BG_SURFACE).pack(side="left", padx=16, pady=6)
 
     # ─── PLANNER TAB ─────────────────────────────────────────────────────
     def _build_planner_tab(self):
-        container = ttk.Frame(self.planner_tab)
-        container.pack(fill="both", expand=True, padx=24, pady=20)
+        # Scrollable canvas for full-bleed background
+        self.planner_canvas = tk.Canvas(self.planner_tab, bg=BG_DEEP, highlightthickness=0, bd=0)
+        self.planner_scrollbar = ttk.Scrollbar(self.planner_tab, orient="vertical",
+                                               command=self.planner_canvas.yview)
+        self.planner_canvas.configure(yscrollcommand=self.planner_scrollbar.set)
 
-        # Title row
-        title_frame = ttk.Frame(container)
-        title_frame.pack(fill="x", pady=(0, 18))
-        ttk.Label(title_frame, text="Where should we go?",
-                  font=self.subheading_font, foreground=TEXT_PRIMARY).pack(side="left")
-        ttk.Label(title_frame, text="Full dataset · 20 destinations",
-                  font=self.small_font, foreground=ACCENT_RED).pack(side="right")
+        self.planner_canvas.pack(side="left", fill="both", expand=True)
+        self.planner_scrollbar.pack(side="right", fill="y")
 
-        # Form frame with Surface bg
-        form_outer = tk.Frame(container, bg=BG_SURFACE, highlightbackground=BORDER,
-                              highlightthickness=1, bd=0)
-        form_outer.pack(fill="x", pady=(0, 16))
-        form = tk.Frame(form_outer, bg=BG_SURFACE)
-        form.pack(fill="x", padx=24, pady=20)
+        # Canvas background image item
+        self._planner_bg_id = self.planner_canvas.create_image(0, 0, anchor="nw")
 
-        # Configure 4-column grid
+        # Canvas scroll & resize bindings
+        self.planner_canvas.bind("<Enter>", lambda e: self._bind_mousewheel(self.planner_canvas))
+        self.planner_canvas.bind("<Leave>", lambda e: self._unbind_mousewheel(self.planner_canvas))
+        self.planner_canvas.bind("<Configure>", self._on_planner_canvas_configure)
+
+        # Floating Main Content Card
+        self.planner_content = tk.Frame(self.planner_canvas, bg=BG_CARD_SOLID,
+                                        highlightbackground=BORDER_LIGHT,
+                                        highlightthickness=1, bd=0)
+        self._planner_win_id = self.planner_canvas.create_window(590, 24, window=self.planner_content,
+                                                                 anchor="n", width=1060)
+        self.planner_content.bind("<Configure>",
+            lambda e: self.planner_canvas.configure(scrollregion=self.planner_canvas.bbox("all")))
+
+        # Top Accent Stripe
+        tk.Frame(self.planner_content, bg=ACCENT_RED, height=3).pack(fill="x")
+
+        # Title Row
+        title_frame = tk.Frame(self.planner_content, bg=BG_CARD_SOLID)
+        title_frame.pack(fill="x", padx=24, pady=(18, 12))
+
+        title_left = tk.Frame(title_frame, bg=BG_CARD_SOLID)
+        title_left.pack(side="left")
+        tk.Label(title_left, text="✦ Where should we go?",
+                 font=self.subheading_font, fg=TEXT_PRIMARY, bg=BG_CARD_SOLID).pack(side="left")
+        tk.Label(title_left, text="   Discover tailored trips across nature, food, culture & beaches",
+                 font=self.small_font, fg=TEXT_MUTED, bg=BG_CARD_SOLID).pack(side="left", pady=(2, 0))
+
+        tk.Label(title_frame, text="Full dataset · 20 destinations",
+                 font=self.small_font, fg=ACCENT_RED, bg=BG_CARD_SOLID).pack(side="right")
+
+        # Form Inputs Grid
+        form = tk.Frame(self.planner_content, bg=BG_CARD_SOLID)
+        form.pack(fill="x", padx=24, pady=(0, 14))
+
         for c in range(4):
             form.columnconfigure(c, weight=1, uniform="col")
 
-        # ── Row 0 ──
+        # ── Row 0 & 1 ──
         self._add_label(form, "TRIP SCOPE", 0, 0)
         self.scope_var = tk.StringVar(value="Either")
         self.scope_cb = self._add_combo(form, self.scope_var,
@@ -302,7 +377,7 @@ class TravelPlannerApp(tk.Tk):
         self.budget_var = tk.StringVar(value="50000")
         self.budget_entry = self._add_entry(form, self.budget_var, 1, 3)
 
-        # ── Row 2 ──
+        # ── Row 2 & 3 ──
         self._add_label(form, "CLIMATE", 2, 0)
         self.climate_var = tk.StringVar(value="Any")
         self._add_combo(form, self.climate_var,
@@ -321,26 +396,29 @@ class TravelPlannerApp(tk.Tk):
         self.start_var = tk.StringVar(value="")
         self._add_entry(form, self.start_var, 3, 3)
 
-        # ── Buttons row ──
-        btn_frame = tk.Frame(form, bg=BG_SURFACE)
-        btn_frame.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(18, 0))
+        # ── Row 4: Buttons ──
+        btn_frame = tk.Frame(form, bg=BG_CARD_SOLID)
+        btn_frame.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(16, 4))
 
         disclaimer = tk.Label(btn_frame, text="All costs are illustrative estimates — not live fares.",
-                              bg=BG_SURFACE, fg=TEXT_MUTED, font=self.small_font, anchor="w")
+                              bg=BG_CARD_SOLID, fg=TEXT_MUTED, font=self.small_font, anchor="w")
         disclaimer.pack(side="left")
 
         self.find_btn = tk.Button(
             btn_frame, text="  🔍  Find Destinations  ", font=self.btn_font,
             bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
-            activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=10,
+            activeforeground="#ffffff", relief="flat", bd=0, padx=22, pady=10,
             cursor="hand2", command=self._on_find
         )
         self.find_btn.pack(side="right")
         self._bind_hover(self.find_btn, ACCENT_DARK, ACCENT_RED)
 
-        # ── Quick-actions row ──
-        quick_frame = tk.Frame(container, bg=BG_DEEP)
-        quick_frame.pack(fill="x", pady=(4, 0))
+        # ── Quick presets bar inside the card base ──
+        quick_frame = tk.Frame(self.planner_content, bg=BG_SURFACE, highlightbackground=BORDER,
+                               highlightthickness=1, bd=0)
+        quick_frame.pack(fill="x", padx=0, pady=(6, 0))
+        quick_inner = tk.Frame(quick_frame, bg=BG_SURFACE)
+        quick_inner.pack(fill="x", padx=24, pady=10)
 
         presets = [
             ("🏔️ Mountain Trip", {"scope": "Domestic", "climate": "Cold", "interests": "mountains, adventure, nature", "days": "5", "budget": "40000"}),
@@ -349,15 +427,110 @@ class TravelPlannerApp(tk.Tk):
             ("✈️ International", {"scope": "International", "climate": "Any", "interests": "food, culture, shopping", "days": "5", "budget": "80000"}),
             ("💰 Budget Trip", {"scope": "Either", "climate": "Any", "interests": "nature, food", "days": "3", "budget": "20000"}),
         ]
-        tk.Label(quick_frame, text="Quick presets:", bg=BG_DEEP, fg=TEXT_MUTED,
+        tk.Label(quick_inner, text="Quick presets:", bg=BG_SURFACE, fg=TEXT_MUTED,
                  font=self.small_font).pack(side="left", padx=(0, 8))
         for label, vals in presets:
-            btn = tk.Button(quick_frame, text=label, font=self.small_font,
+            btn = tk.Button(quick_inner, text=label, font=self.small_font,
                             bg=BG_CARD, fg=TEXT_SECONDARY, relief="flat", bd=0,
-                            padx=12, pady=5, cursor="hand2",
+                            padx=11, pady=5, cursor="hand2",
                             command=lambda v=vals: self._apply_preset(v))
             btn.pack(side="left", padx=3)
             self._bind_hover(btn, BG_ELEVATED, BG_CARD)
+
+        # ── Explore Destinations By Vibe (Travel, Food, Nature, Culture) ──
+        vibe_section = tk.Frame(self.planner_content, bg=BG_INPUT, highlightbackground=BORDER,
+                                highlightthickness=1, bd=0)
+        vibe_section.pack(fill="x", padx=0, pady=0)
+        vibe_inner = tk.Frame(vibe_section, bg=BG_INPUT)
+        vibe_inner.pack(fill="x", padx=24, pady=14)
+
+        vibe_title_row = tk.Frame(vibe_inner, bg=BG_INPUT)
+        vibe_title_row.pack(fill="x", pady=(0, 10))
+        tk.Label(vibe_title_row, text="✦ EXPLORE BY VIBE",
+                 font=("Segoe UI", 9, "bold"), fg=ACCENT_CRIM, bg=BG_INPUT).pack(side="left")
+        tk.Label(vibe_title_row, text="Click any card to load curated travel filters",
+                 font=self.small_font, fg=TEXT_MUTED, bg=BG_INPUT).pack(side="left", padx=(10, 0))
+
+        vibes_grid = tk.Frame(vibe_inner, bg=BG_INPUT)
+        vibes_grid.pack(fill="x")
+        for i in range(4):
+            vibes_grid.columnconfigure(i, weight=1, uniform="vibe")
+
+        vibe_cards = [
+            ("🌿 Nature & Mountains", "Misty peaks, waterfalls, emerald trails",
+             {"scope": "Domestic", "climate": "Cold", "interests": "nature, mountains, waterfalls", "days": "5", "budget": "45000"}),
+            ("🍜 Food & Street Delights", "Authentic flavours, night markets & cafes",
+             {"scope": "Either", "climate": "Any", "interests": "food, markets, culture", "days": "4", "budget": "50000"}),
+            ("✈️ Global Wonders & Sights", "Iconic landmarks, balloon flights & world heritage",
+             {"scope": "International", "climate": "Any", "interests": "culture, architecture, sightseeing", "days": "5", "budget": "80000"}),
+            ("🏖️ Coastal & Island Escapes", "Turquoise ocean waters, beaches & palm breeze",
+             {"scope": "Either", "climate": "Tropical", "interests": "beach, relaxation, nature", "days": "4", "budget": "55000"}),
+        ]
+
+        for idx, (v_title, v_desc, v_preset) in enumerate(vibe_cards):
+            v_box = tk.Frame(vibes_grid, bg=BG_CARD, highlightbackground=BORDER,
+                             highlightthickness=1, padx=12, pady=10, cursor="hand2")
+            v_box.grid(row=0, column=idx, padx=4, sticky="nsew")
+
+            t_lbl = tk.Label(v_box, text=v_title, font=("Segoe UI", 10, "bold"),
+                             fg=TEXT_PRIMARY, bg=BG_CARD, anchor="w")
+            t_lbl.pack(fill="x")
+
+            d_lbl = tk.Label(v_box, text=v_desc, font=("Segoe UI", 8),
+                             fg=TEXT_MUTED, bg=BG_CARD, anchor="w", wraplength=210, justify="left")
+            d_lbl.pack(fill="x", pady=(4, 6))
+
+            a_lbl = tk.Label(v_box, text="Apply vibe →", font=("Segoe UI", 8, "bold"),
+                             fg=ACCENT_RED, bg=BG_CARD, anchor="w")
+            a_lbl.pack(fill="x")
+
+            for widget in (v_box, t_lbl, d_lbl, a_lbl):
+                widget.bind("<Button-1>", lambda e, p=v_preset: self._apply_preset(p))
+                widget.bind("<Enter>", lambda e, b=v_box, t=t_lbl, a=a_lbl: (
+                    b.configure(bg=BG_ELEVATED, highlightbackground=ACCENT_RED),
+                    t.configure(bg=BG_ELEVATED),
+                    a.configure(bg=BG_ELEVATED)
+                ))
+                widget.bind("<Leave>", lambda e, b=v_box, t=t_lbl, a=a_lbl: (
+                    b.configure(bg=BG_CARD, highlightbackground=BORDER),
+                    t.configure(bg=BG_CARD),
+                    a.configure(bg=BG_CARD)
+                ))
+
+        # Initial background render
+        self.after(10, lambda: self._update_planner_bg(self.winfo_width() or 1180, self.winfo_height() or 820))
+
+    def _on_planner_canvas_configure(self, event):
+        w, h = event.width, event.height
+        if w <= 50 or h <= 50:
+            return
+
+        target_w = min(max(w - 50, 600), 1080)
+        center_x = w // 2
+        self.planner_canvas.coords(self._planner_win_id, center_x, 24)
+        self.planner_canvas.itemconfigure(self._planner_win_id, width=target_w)
+
+        if abs(w - self._planner_last_w) < 15 and abs(h - self._planner_last_h) < 15:
+            return
+
+        if self._planner_resize_job:
+            self.after_cancel(self._planner_resize_job)
+        self._planner_resize_job = self.after(40, lambda: self._update_planner_bg(w, h))
+
+    def _update_planner_bg(self, w, h):
+        self._planner_resize_job = None
+        self._planner_last_w = w
+        self._planner_last_h = h
+
+        req_h = self.planner_content.winfo_reqheight() if hasattr(self, "planner_content") else h
+        total_h = max(h, req_h + 120)
+
+        photo = self._create_cover_image(w, total_h, brightness=0.88)
+        if photo:
+            self._planner_photo = photo
+            self.planner_canvas.itemconfig(self._planner_bg_id, image=self._planner_photo)
+
+        self.planner_canvas.configure(scrollregion=self.planner_canvas.bbox("all"))
 
     # ─── RESULTS TAB ─────────────────────────────────────────────────────
     def _build_results_tab(self):
@@ -369,23 +542,75 @@ class TravelPlannerApp(tk.Tk):
                                          highlightthickness=0, bd=0)
         scrollbar = ttk.Scrollbar(self.results_container, orient="vertical",
                                    command=self.results_canvas.yview)
-        self.results_scroll_frame = ttk.Frame(self.results_canvas)
+
+        self._results_bg_id = self.results_canvas.create_image(0, 0, anchor="nw")
+
+        self.results_scroll_frame = tk.Frame(self.results_canvas, bg=BG_DEEP)
         self.results_scroll_frame.bind("<Configure>",
             lambda e: self.results_canvas.configure(scrollregion=self.results_canvas.bbox("all")))
-        self.results_canvas.create_window((0, 0), window=self.results_scroll_frame, anchor="nw")
+        self._results_win_id = self.results_canvas.create_window((0, 0), window=self.results_scroll_frame, anchor="nw")
         self.results_canvas.configure(yscrollcommand=scrollbar.set)
         self.results_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Mousewheel scrolling
+        # Mousewheel scrolling & resize bindings
         self.results_canvas.bind("<Enter>", lambda e: self._bind_mousewheel(self.results_canvas))
         self.results_canvas.bind("<Leave>", lambda e: self._unbind_mousewheel(self.results_canvas))
+        self.results_canvas.bind("<Configure>", self._on_results_canvas_configure)
 
-        # Placeholder
-        self.results_placeholder = ttk.Label(self.results_scroll_frame,
-            text="\n\n\n\n🔍  Enter your trip details in the Planner tab\n      and click 'Find Destinations' to see results here.",
-            font=self.body_font, foreground=TEXT_MUTED, justify="center")
-        self.results_placeholder.pack(pady=80)
+        # Placeholder card
+        self._render_results_placeholder()
+        self.after(10, lambda: self._update_results_bg(self.winfo_width() or 1180, self.winfo_height() or 820))
+
+    def _render_results_placeholder(self):
+        for widget in self.results_scroll_frame.winfo_children():
+            widget.destroy()
+
+        card = tk.Frame(self.results_scroll_frame, bg=BG_CARD_SOLID,
+                        highlightbackground=BORDER_LIGHT, highlightthickness=1)
+        card.pack(fill="x", padx=48, pady=60)
+
+        tk.Frame(card, bg=ACCENT_RED, height=3).pack(fill="x")
+        inner = tk.Frame(card, bg=BG_CARD_SOLID)
+        inner.pack(fill="x", padx=32, pady=36)
+
+        tk.Label(inner, text="🔍  Ready to Discover Destinations?",
+                 font=self.subheading_font, fg=TEXT_PRIMARY, bg=BG_CARD_SOLID).pack(pady=(0, 8))
+        tk.Label(inner,
+                 text="Enter your travel scope, duration, budget and interests in the Planner tab,\n"
+                      "then click 'Find Destinations' to generate top AI-ranked recommendations with full cost breakdowns.",
+                 font=self.body_font, fg=TEXT_SECONDARY, bg=BG_CARD_SOLID, justify="center").pack(pady=(0, 20))
+
+        go_btn = tk.Button(inner, text="  ← Go to Trip Planner  ", font=self.btn_font,
+                           bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
+                           activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=9,
+                           cursor="hand2", command=lambda: self.notebook.select(0))
+        go_btn.pack()
+        self._bind_hover(go_btn, ACCENT_DARK, ACCENT_RED)
+
+    def _on_results_canvas_configure(self, event):
+        w, h = event.width, event.height
+        if w <= 50 or h <= 50:
+            return
+        if hasattr(self, "_results_win_id"):
+            self.results_canvas.itemconfigure(self._results_win_id, width=w)
+
+        if abs(w - self._results_last_w) < 20 and abs(h - self._results_last_h) < 20:
+            return
+        if self._results_resize_job:
+            self.after_cancel(self._results_resize_job)
+        self._results_resize_job = self.after(50, lambda: self._update_results_bg(w, h))
+
+    def _update_results_bg(self, w, h):
+        self._results_resize_job = None
+        self._results_last_w = w
+        self._results_last_h = h
+        req_h = self.results_scroll_frame.winfo_reqheight() if hasattr(self, "results_scroll_frame") else h
+        total_h = max(h, req_h + 80)
+        photo = self._create_cover_image(w, total_h, brightness=0.42)
+        if photo:
+            self._results_photo = photo
+            self.results_canvas.itemconfig(self._results_bg_id, image=self._results_photo)
 
     # ─── ITINERARY TAB ───────────────────────────────────────────────────
     def _build_itinerary_tab(self):
@@ -396,29 +621,81 @@ class TravelPlannerApp(tk.Tk):
                                       highlightthickness=0, bd=0)
         scrollbar = ttk.Scrollbar(self.itin_container, orient="vertical",
                                    command=self.itin_canvas.yview)
-        self.itin_scroll_frame = ttk.Frame(self.itin_canvas)
+
+        self._itin_bg_id = self.itin_canvas.create_image(0, 0, anchor="nw")
+
+        self.itin_scroll_frame = tk.Frame(self.itin_canvas, bg=BG_DEEP)
         self.itin_scroll_frame.bind("<Configure>",
             lambda e: self.itin_canvas.configure(scrollregion=self.itin_canvas.bbox("all")))
-        self.itin_canvas.create_window((0, 0), window=self.itin_scroll_frame, anchor="nw")
+        self._itin_win_id = self.itin_canvas.create_window((0, 0), window=self.itin_scroll_frame, anchor="nw")
         self.itin_canvas.configure(yscrollcommand=scrollbar.set)
         self.itin_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
         self.itin_canvas.bind("<Enter>", lambda e: self._bind_mousewheel(self.itin_canvas))
         self.itin_canvas.bind("<Leave>", lambda e: self._unbind_mousewheel(self.itin_canvas))
+        self.itin_canvas.bind("<Configure>", self._on_itin_canvas_configure)
 
-        self.itin_placeholder = ttk.Label(self.itin_scroll_frame,
-            text="\n\n\n\n🗓️  Select a destination from the Results tab\n      to generate an itinerary and interactive map.",
-            font=self.body_font, foreground=TEXT_MUTED, justify="center")
-        self.itin_placeholder.pack(pady=80)
+        self._render_itin_placeholder()
+        self.after(10, lambda: self._update_itin_bg(self.winfo_width() or 1180, self.winfo_height() or 820))
+
+    def _render_itin_placeholder(self):
+        for widget in self.itin_scroll_frame.winfo_children():
+            widget.destroy()
+
+        card = tk.Frame(self.itin_scroll_frame, bg=BG_CARD_SOLID,
+                        highlightbackground=BORDER_LIGHT, highlightthickness=1)
+        card.pack(fill="x", padx=48, pady=60)
+
+        tk.Frame(card, bg=ACCENT_RED, height=3).pack(fill="x")
+        inner = tk.Frame(card, bg=BG_CARD_SOLID)
+        inner.pack(fill="x", padx=32, pady=36)
+
+        tk.Label(inner, text="🗓️  Day-by-Day Itinerary & Interactive Map",
+                 font=self.subheading_font, fg=TEXT_PRIMARY, bg=BG_CARD_SOLID).pack(pady=(0, 8))
+        tk.Label(inner,
+                 text="Select any destination shortlist card in the Results tab to build\n"
+                      "a customized day-by-day travel schedule, activity budgets, and an interactive Folium map.",
+                 font=self.body_font, fg=TEXT_SECONDARY, bg=BG_CARD_SOLID, justify="center").pack(pady=(0, 20))
+
+        go_btn = tk.Button(inner, text="  ← View Results  ", font=self.btn_font,
+                           bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
+                           activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=9,
+                           cursor="hand2", command=lambda: self.notebook.select(1))
+        go_btn.pack()
+        self._bind_hover(go_btn, ACCENT_DARK, ACCENT_RED)
+
+    def _on_itin_canvas_configure(self, event):
+        w, h = event.width, event.height
+        if w <= 50 or h <= 50:
+            return
+        if hasattr(self, "_itin_win_id"):
+            self.itin_canvas.itemconfigure(self._itin_win_id, width=w)
+
+        if abs(w - self._itin_last_w) < 20 and abs(h - self._itin_last_h) < 20:
+            return
+        if self._itin_resize_job:
+            self.after_cancel(self._itin_resize_job)
+        self._itin_resize_job = self.after(50, lambda: self._update_itin_bg(w, h))
+
+    def _update_itin_bg(self, w, h):
+        self._itin_resize_job = None
+        self._itin_last_w = w
+        self._itin_last_h = h
+        req_h = self.itin_scroll_frame.winfo_reqheight() if hasattr(self, "itin_scroll_frame") else h
+        total_h = max(h, req_h + 80)
+        photo = self._create_cover_image(w, total_h, brightness=0.42)
+        if photo:
+            self._itin_photo = photo
+            self.itin_canvas.itemconfig(self._itin_bg_id, image=self._itin_photo)
 
     # ═══════════════════════════════════════════════════════════════════════
     #  FORM HELPERS
     # ═══════════════════════════════════════════════════════════════════════
     def _add_label(self, parent, text, row, col):
-        lbl = tk.Label(parent, text=text, bg=BG_SURFACE, fg=TEXT_SECONDARY,
+        lbl = tk.Label(parent, text=text, bg=BG_CARD_SOLID, fg=TEXT_SECONDARY,
                        font=self.label_font, anchor="w")
-        lbl.grid(row=row, column=col, sticky="sw", padx=6, pady=(12, 2))
+        lbl.grid(row=row, column=col, sticky="sw", padx=6, pady=(10, 2))
 
     def _add_combo(self, parent, var, values, row, col, span=1):
         cb = ttk.Combobox(parent, textvariable=var, values=values, state="readonly",
@@ -459,13 +736,19 @@ class TravelPlannerApp(tk.Tk):
             self.frames = load_data()
             self.model, self.metrics = train_model()
             acc = self.metrics["synthetic_holdout_accuracy"]
-            self.after(0, lambda: self.model_label.configure(
-                text=f"Engine ready · Classifier accuracy: {acc:.1%}"))
-            self.after(0, lambda: self._show_status(
-                f"Ready — {len(self.frames['destinations'])} destinations loaded, model trained"))
+            try:
+                self.after(0, lambda: self.model_label.configure(
+                    text=f"Engine ready · Classifier accuracy: {acc:.1%}"))
+                self.after(0, lambda: self._show_status(
+                    f"Ready — {len(self.frames['destinations'])} destinations loaded, model trained"))
+            except (tk.TclError, RuntimeError):
+                pass
         except Exception as exc:
-            self.after(0, lambda: messagebox.showerror("Initialisation Error", str(exc)))
-            self.after(0, lambda: self._show_status(f"Error: {exc}"))
+            try:
+                self.after(0, lambda: messagebox.showerror("Initialisation Error", str(exc)))
+                self.after(0, lambda: self._show_status(f"Error: {exc}"))
+            except (tk.TclError, RuntimeError):
+                pass
 
     def _reload_data(self):
         self._show_status("Reloading data…")
@@ -507,12 +790,21 @@ class TravelPlannerApp(tk.Tk):
         def run():
             try:
                 results = recommend_destinations(self.frames, request, self.model, limit=5)
-                self.after(0, lambda: self._display_results(results, request))
+                try:
+                    self.after(0, lambda: self._display_results(results, request))
+                except (tk.TclError, RuntimeError):
+                    pass
             except Exception as exc:
-                self.after(0, lambda: messagebox.showerror("Error", str(exc)))
+                try:
+                    self.after(0, lambda: messagebox.showerror("Error", str(exc)))
+                except (tk.TclError, RuntimeError):
+                    pass
             finally:
-                self.after(0, lambda: self.find_btn.configure(
-                    state="normal", text="  🔍  Find Destinations  "))
+                try:
+                    self.after(0, lambda: self.find_btn.configure(
+                        state="normal", text="  🔍  Find Destinations  "))
+                except (tk.TclError, RuntimeError):
+                    pass
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -530,12 +822,15 @@ class TravelPlannerApp(tk.Tk):
 
         if not results:
             self._show_status("No destinations match the criteria.")
-            lbl = tk.Label(self.results_scroll_frame, bg=BG_DEEP, fg=TEXT_MUTED,
-                           font=self.body_font, justify="center",
-                           text="\n\n🔍  No destinations fit these filters.\n\n"
-                                "Try a higher budget, longer trip, 'Any' climate,\n"
-                                "or 'Either' trip scope.")
-            lbl.pack(pady=80)
+            card = tk.Frame(self.results_scroll_frame, bg=BG_CARD_SOLID,
+                            highlightbackground=BORDER_LIGHT, highlightthickness=1)
+            card.pack(fill="x", padx=48, pady=60)
+            inner = tk.Frame(card, bg=BG_CARD_SOLID)
+            inner.pack(fill="x", padx=32, pady=36)
+            tk.Label(inner, text="🔍  No destinations fit these filters.",
+                     font=self.subheading_font, fg=TEXT_PRIMARY, bg=BG_CARD_SOLID).pack(pady=(0, 8))
+            tk.Label(inner, text="Try adjusting your budget, longer duration, or choosing 'Either' trip scope.",
+                     font=self.body_font, fg=TEXT_SECONDARY, bg=BG_CARD_SOLID).pack()
             self.notebook.select(1)
             return
 
@@ -544,7 +839,7 @@ class TravelPlannerApp(tk.Tk):
         # Header
         header = tk.Frame(self.results_scroll_frame, bg=BG_DEEP)
         header.pack(fill="x", padx=24, pady=(20, 12))
-        tk.Label(header, text=f"Your Destination Shortlist", bg=BG_DEEP,
+        tk.Label(header, text="Your Destination Shortlist", bg=BG_DEEP,
                  fg=TEXT_PRIMARY, font=self.subheading_font, anchor="w").pack(side="left")
         start = request.get("start_city", "")
         meta_text = f"{request['people']} traveller(s) · {request['days']} day(s) · Budget {money(request['budget'])}"
@@ -599,7 +894,7 @@ class TravelPlannerApp(tk.Tk):
 
             tk.Label(row2, text=d.get("description", ""), bg=BG_CARD,
                      fg=TEXT_SECONDARY, font=self.card_body_font, anchor="w",
-                     wraplength=500).pack(side="left", anchor="w")
+                     wraplength=520).pack(side="left", anchor="w")
 
             reasons_frame = tk.Frame(row2, bg=BG_CARD)
             reasons_frame.pack(side="right")

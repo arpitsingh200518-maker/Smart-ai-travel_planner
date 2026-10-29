@@ -132,6 +132,16 @@ input, select { font-family: inherit; }
 .hero {
   position: relative; padding: 140px 0 100px; overflow: hidden;
 }
+.hero::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  background-image: linear-gradient(180deg, rgba(6, 8, 15, 0.72) 0%, rgba(6, 8, 15, 0.95) 100%),
+                    url('artifacts/travel_bg.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.65;
+  filter: saturate(1.2);
+}
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 16px; border-radius: 99px;
