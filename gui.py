@@ -12,6 +12,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox, font as tkfont
 from pathlib import Path
 
+try:
+    from PIL import Image, ImageTk
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+
 # ── project imports ──────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -23,22 +29,27 @@ from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map
 
-# ── colour palette ───────────────────────────────────────────────────────────
-BG_DEEP      = "#0d1117"
-BG_SURFACE   = "#161b22"
-BG_CARD      = "#1c2333"
-BG_ELEVATED  = "#242d3d"
-BG_INPUT     = "#0d1117"
-ACCENT_LIME  = "#a8e64d"
-ACCENT_CYAN  = "#58d5e3"
-ACCENT_PURPLE= "#b18cfe"
-ACCENT_ROSE  = "#ff6b8a"
-ACCENT_AMBER = "#ffc84d"
-TEXT_PRIMARY  = "#e6edf3"
-TEXT_SECONDARY= "#8b949e"
-TEXT_MUTED    = "#484f58"
-BORDER       = "#30363d"
-HOVER        = "#2a3343"
+# ── colour palette ── Black & Red theme ──────────────────────────────────────
+BG_DEEP      = "#0a0a0a"       # near-black base
+BG_SURFACE   = "#121212"       # dark surface
+BG_CARD      = "#1a1a1a"       # card background
+BG_ELEVATED  = "#252525"       # elevated panels
+BG_INPUT     = "#0e0e0e"       # input fields
+ACCENT_RED   = "#e53935"       # primary red accent
+ACCENT_CRIM  = "#ff1744"       # bright crimson highlight
+ACCENT_DARK  = "#b71c1c"       # deep red
+ACCENT_CYAN  = "#ff5252"       # light red (replacing cyan)
+ACCENT_PURPLE= "#ff8a80"       # salmon pink
+ACCENT_ROSE  = "#ff6b8a"       # rose
+ACCENT_AMBER = "#ff9100"       # amber/orange for warnings
+TEXT_PRIMARY  = "#f5f5f5"      # near-white text
+TEXT_SECONDARY= "#9e9e9e"     # muted grey text
+TEXT_MUTED    = "#616161"      # very muted text
+BORDER       = "#2a2a2a"       # subtle dark border
+HOVER        = "#2d1515"       # hover with red tint
+
+# ── backward compat alias ────────────────────────────────────────────────────
+ACCENT_LIME  = ACCENT_RED      # all old ACCENT_LIME refs now use red
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 def money(n):
@@ -89,6 +100,17 @@ class TravelPlannerApp(tk.Tk):
         self.btn_font       = tkfont.Font(family="Segoe UI", size=11, weight="bold")
         self.menu_font      = tkfont.Font(family="Segoe UI", size=10)
 
+        # ── banner image ──────────────────────────────────────────────────────
+        self._banner_photo = None
+        banner_path = ROOT / "artifacts" / "travel_banner.jpg"
+        if HAS_PIL and banner_path.exists():
+            try:
+                img = Image.open(banner_path)
+                img = img.resize((1180, 160), Image.LANCZOS)
+                self._banner_photo = ImageTk.PhotoImage(img)
+            except Exception:
+                pass  # fall back gracefully
+
         # ── style ttk ───────────────────────────────────────────────────────
         self.style = ttk.Style(self)
         self.style.theme_use("clam")
@@ -115,12 +137,12 @@ class TravelPlannerApp(tk.Tk):
         s.configure("Surface.TFrame", background=BG_SURFACE)
         s.configure("TLabel", background=BG_DEEP, foreground=TEXT_PRIMARY, font=self.body_font)
         s.configure("Card.TLabel", background=BG_CARD, foreground=TEXT_PRIMARY)
-        s.configure("Heading.TLabel", font=self.heading_font, foreground=ACCENT_LIME, background=BG_SURFACE)
+        s.configure("Heading.TLabel", font=self.heading_font, foreground=ACCENT_CRIM, background=BG_SURFACE)
         s.configure("Sub.TLabel", font=self.subheading_font, foreground=TEXT_PRIMARY, background=BG_DEEP)
         s.configure("Muted.TLabel", foreground=TEXT_SECONDARY, font=self.small_font, background=BG_DEEP)
         s.configure("MutedCard.TLabel", foreground=TEXT_SECONDARY, font=self.small_font, background=BG_CARD)
-        s.configure("Score.TLabel", font=self.score_font, foreground=ACCENT_LIME, background=BG_CARD)
-        s.configure("Money.TLabel", font=self.money_font, foreground=ACCENT_LIME, background=BG_CARD)
+        s.configure("Score.TLabel", font=self.score_font, foreground=ACCENT_RED, background=BG_CARD)
+        s.configure("Money.TLabel", font=self.money_font, foreground=ACCENT_RED, background=BG_CARD)
         s.configure("CardTitle.TLabel", font=self.card_title_font, foreground=TEXT_PRIMARY, background=BG_CARD)
         s.configure("CardBody.TLabel", font=self.card_body_font, foreground=TEXT_SECONDARY, background=BG_CARD)
         s.configure("StatusBar.TLabel", background=BG_SURFACE, foreground=TEXT_MUTED, font=self.small_font)
@@ -136,7 +158,7 @@ class TravelPlannerApp(tk.Tk):
               selectforeground=[("readonly", TEXT_PRIMARY)])
         self.option_add("*TCombobox*Listbox*Background", BG_CARD)
         self.option_add("*TCombobox*Listbox*Foreground", TEXT_PRIMARY)
-        self.option_add("*TCombobox*Listbox*selectBackground", ACCENT_LIME)
+        self.option_add("*TCombobox*Listbox*selectBackground", ACCENT_RED)
         self.option_add("*TCombobox*Listbox*selectForeground", BG_DEEP)
 
         # Entry
@@ -149,7 +171,7 @@ class TravelPlannerApp(tk.Tk):
                      padding=[16, 8], font=self.label_font)
         s.map("TNotebook.Tab",
               background=[("selected", BG_ELEVATED)],
-              foreground=[("selected", ACCENT_LIME)])
+              foreground=[("selected", ACCENT_CRIM)])
 
         # Scrollbar
         s.configure("Vertical.TScrollbar", background=BG_CARD, troughcolor=BG_SURFACE,
@@ -159,12 +181,12 @@ class TravelPlannerApp(tk.Tk):
     #  MENU BAR
     # ═══════════════════════════════════════════════════════════════════════
     def _build_menu(self):
-        menubar = tk.Menu(self, bg=BG_CARD, fg=TEXT_PRIMARY, activebackground=ACCENT_LIME,
-                          activeforeground=BG_DEEP, font=self.menu_font, relief="flat", bd=0)
+        menubar = tk.Menu(self, bg=BG_CARD, fg=TEXT_PRIMARY, activebackground=ACCENT_RED,
+                          activeforeground="#ffffff", font=self.menu_font, relief="flat", bd=0)
 
         # File
         file_menu = tk.Menu(menubar, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY,
-                            activebackground=ACCENT_LIME, activeforeground=BG_DEEP,
+                            activebackground=ACCENT_RED, activeforeground="#ffffff",
                             font=self.menu_font)
         file_menu.add_command(label="🔄  Reload Data", command=self._reload_data)
         file_menu.add_command(label="🗺️  Open Last Map", command=self._open_last_map)
@@ -174,7 +196,7 @@ class TravelPlannerApp(tk.Tk):
 
         # View
         view_menu = tk.Menu(menubar, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY,
-                            activebackground=ACCENT_LIME, activeforeground=BG_DEEP,
+                            activebackground=ACCENT_RED, activeforeground="#ffffff",
                             font=self.menu_font)
         view_menu.add_command(label="📋  Show Planner", command=lambda: self.notebook.select(0))
         view_menu.add_command(label="📊  Show Results", command=lambda: self.notebook.select(1))
@@ -183,7 +205,7 @@ class TravelPlannerApp(tk.Tk):
 
         # Help
         help_menu = tk.Menu(menubar, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY,
-                            activebackground=ACCENT_LIME, activeforeground=BG_DEEP,
+                            activebackground=ACCENT_RED, activeforeground="#ffffff",
                             font=self.menu_font)
         help_menu.add_command(label="📖  About", command=self._show_about)
         help_menu.add_command(label="🌐  GitHub", command=lambda: webbrowser.open(
@@ -196,6 +218,11 @@ class TravelPlannerApp(tk.Tk):
     #  UI LAYOUT
     # ═══════════════════════════════════════════════════════════════════════
     def _build_ui(self):
+        # ── banner image ─────────────────────────────────────────────────────
+        if self._banner_photo:
+            banner_label = tk.Label(self, image=self._banner_photo, bg=BG_DEEP, bd=0)
+            banner_label.pack(fill="x", padx=0, pady=0)
+
         # ── top header ───────────────────────────────────────────────────────
         header = ttk.Frame(self, style="Surface.TFrame")
         header.pack(fill="x", padx=0, pady=0)
@@ -244,7 +271,7 @@ class TravelPlannerApp(tk.Tk):
         ttk.Label(title_frame, text="Where should we go?",
                   font=self.subheading_font, foreground=TEXT_PRIMARY).pack(side="left")
         ttk.Label(title_frame, text="Full dataset · 20 destinations",
-                  font=self.small_font, foreground=ACCENT_LIME).pack(side="right")
+                  font=self.small_font, foreground=ACCENT_RED).pack(side="right")
 
         # Form frame with Surface bg
         form_outer = tk.Frame(container, bg=BG_SURFACE, highlightbackground=BORDER,
@@ -304,12 +331,12 @@ class TravelPlannerApp(tk.Tk):
 
         self.find_btn = tk.Button(
             btn_frame, text="  🔍  Find Destinations  ", font=self.btn_font,
-            bg=ACCENT_LIME, fg=BG_DEEP, activebackground="#8dcc35",
-            activeforeground=BG_DEEP, relief="flat", bd=0, padx=20, pady=10,
+            bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
+            activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=10,
             cursor="hand2", command=self._on_find
         )
         self.find_btn.pack(side="right")
-        self._bind_hover(self.find_btn, "#8dcc35", ACCENT_LIME)
+        self._bind_hover(self.find_btn, ACCENT_DARK, ACCENT_RED)
 
         # ── Quick-actions row ──
         quick_frame = tk.Frame(container, bg=BG_DEEP)
@@ -408,7 +435,7 @@ class TravelPlannerApp(tk.Tk):
         entry_inner.pack(fill="x", padx=8, pady=6)
         frame.grid(row=row, column=col, columnspan=span, sticky="ew", padx=6, pady=2)
 
-        def on_focus_in(e): frame.configure(highlightbackground=ACCENT_LIME)
+        def on_focus_in(e): frame.configure(highlightbackground=ACCENT_RED)
         def on_focus_out(e): frame.configure(highlightbackground=BORDER)
         entry_inner.bind("<FocusIn>", on_focus_in)
         entry_inner.bind("<FocusOut>", on_focus_out)
@@ -528,7 +555,7 @@ class TravelPlannerApp(tk.Tk):
 
         # Destination cards
         rank_labels = ["🏆 Best Match", "🥈 Runner Up", "🥉 Great Option", "✨ Worth a Look", "📌 Also Fits"]
-        accent_colors = [ACCENT_LIME, ACCENT_CYAN, ACCENT_PURPLE, ACCENT_ROSE, ACCENT_AMBER]
+        accent_colors = [ACCENT_RED, ACCENT_CRIM, ACCENT_PURPLE, ACCENT_ROSE, ACCENT_AMBER]
 
         for i, result in enumerate(results):
             d = result["destination"]
@@ -578,7 +605,7 @@ class TravelPlannerApp(tk.Tk):
             reasons_frame.pack(side="right")
             for reason in result["reasons"]:
                 r_lbl = tk.Label(reasons_frame, text=f" {reason} ", bg=BG_DEEP,
-                                 fg=ACCENT_LIME, font=("Segoe UI", 8, "bold"), padx=6, pady=2)
+                                 fg=ACCENT_RED, font=("Segoe UI", 8, "bold"), padx=6, pady=2)
                 r_lbl.pack(side="left", padx=2)
 
             # Row 3: Cost breakdown
@@ -672,8 +699,8 @@ class TravelPlannerApp(tk.Tk):
         category_emojis = {"nature": "🌿", "food": "🍽️", "history": "🏛️",
                            "adventure": "🧗", "culture": "🎭", "architecture": "🏗️",
                            "shopping": "🛍️", "wildlife": "🦁"}
-        day_colors = [ACCENT_LIME, ACCENT_ROSE, ACCENT_PURPLE, ACCENT_CYAN,
-                      ACCENT_AMBER, "#ff9f43", "#70a1ff"]
+        day_colors = [ACCENT_RED, ACCENT_CRIM, ACCENT_PURPLE, ACCENT_ROSE,
+                      ACCENT_AMBER, "#ff5722", "#e91e63"]
 
         for day_idx, stops in enumerate(itinerary):
             day_color = day_colors[day_idx % len(day_colors)]
@@ -713,7 +740,7 @@ class TravelPlannerApp(tk.Tk):
                          bg=BG_CARD, fg=TEXT_MUTED, font=self.small_font, anchor="w").pack(anchor="w")
 
                 tk.Label(inner, text=f"{money(stop['estimated_cost_per_person'])}/pp",
-                         bg=BG_CARD, fg=ACCENT_LIME, font=("Segoe UI", 11, "bold")).pack(side="right")
+                         bg=BG_CARD, fg=ACCENT_RED, font=("Segoe UI", 11, "bold")).pack(side="right")
 
         # Open Map button
         btn_frame = tk.Frame(self.itin_scroll_frame, bg=BG_DEEP)
@@ -721,12 +748,12 @@ class TravelPlannerApp(tk.Tk):
 
         map_btn = tk.Button(
             btn_frame, text="  🗺️  Open Interactive Map in Browser  ", font=self.btn_font,
-            bg=ACCENT_CYAN, fg=BG_DEEP, activebackground="#3fc0cf",
-            activeforeground=BG_DEEP, relief="flat", bd=0, padx=20, pady=12,
+            bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
+            activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=12,
             cursor="hand2", command=lambda: webbrowser.open(str(map_path))
         )
         map_btn.pack(side="left")
-        self._bind_hover(map_btn, "#3fc0cf", ACCENT_CYAN)
+        self._bind_hover(map_btn, ACCENT_DARK, ACCENT_RED)
 
         new_search_btn = tk.Button(
             btn_frame, text="  🔄  New Search  ", font=self.btn_font,
