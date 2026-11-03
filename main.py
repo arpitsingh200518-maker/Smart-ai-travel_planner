@@ -5,8 +5,7 @@ from travel.features import validate_request
 from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
-from travel.map_builder import build_map, open_map
-from travel.live_api import get_live_weather, get_live_flight_search_url
+from travel.map_builder import build_map
 
 ROOT = Path(__file__).resolve().parent
 
@@ -77,17 +76,6 @@ def main():
         d = result["destination"]
         print(f"\n{rank}. {d['name']}, {d['country']} — score {result['score']}/100")
         print("    Why:", "; ".join(result["reasons"]))
-        
-        # Live Details API integration
-        try:
-            w = get_live_weather(float(d.get("latitude", 0)), float(d.get("longitude", 0)))
-            if w.get("temperature") is not None:
-                print(f"    Live Weather: {w['icon']} {w['temperature']}{w['unit']} {w['condition']}")
-        except Exception:
-            pass
-        flight_url = get_live_flight_search_url(d["name"], request.get("start_city", ""))
-        print(f"    Live Flights: {flight_url}")
-        
         print_costs(result["costs"])
     selected_index = ask_int("\nChoose a destination number to generate an itinerary/map", 1, 1)
     selected_index = min(selected_index, len(results)) - 1
@@ -101,7 +89,7 @@ def main():
         for stop in stops:
             print(f"  - {stop['name']} ({stop['duration_hours']} h, about ₹{stop['estimated_cost_per_person']:,.0f} per person)")
     map_path = ROOT / "artifacts" / "travel_map.html"
-    build_map(selected["destination"], itinerary, map_path, open_browser=True)
+    build_map(selected["destination"], itinerary, map_path)
     print(f"\nInteractive map saved to: {map_path}")
     print("Open the HTML file in a browser. Verify prices and travel details independently.")
 

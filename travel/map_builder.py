@@ -13,8 +13,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from travel.live_api import get_live_weather, get_live_flight_search_url
-
 def open_map(output_path):
     """Open an HTML map file in the user's default browser reliably across platforms."""
     p = Path(output_path).resolve()
@@ -101,28 +99,11 @@ def build_map(destination, itinerary, output_path=None, hotel=None, open_browser
 
     folium.LayerControl(position="topright", collapsed=True).add_to(map_object)
 
-    # Live weather info for destination
-    w_info = get_live_weather(dest_lat, dest_lon)
-    if w_info.get("temperature") is not None:
-        weather_badge = f"""
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #ff5252; padding: 4px 8px; margin: 6px 0; font-size: 11px; border-radius: 4px;">
-            <b>Live Weather:</b> {w_info.get('icon', '🌤️')} {w_info['temperature']}{w_info['unit']} ({w_info.get('condition', '')})
-        </div>
-        """
-    else:
-        weather_badge = ""
-
-    flight_link = get_live_flight_search_url(dest_name)
-
     # Destination central marker
     dest_popup = f"""
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; min-width: 190px;">
-        <h4 style="margin: 0 0 4px 0; color: #b71c1c;">📍 {dest_name}, {dest_country}</h4>
-        <p style="margin: 0 0 6px 0; font-size: 12px; color: #444;">{dest_desc}</p>
-        {weather_badge}
-        <div style="margin-top: 6px;">
-            <a href="{flight_link}" target="_blank" style="color: #e53935; font-size: 11px; font-weight: bold; text-decoration: none;">✈️ Check Live Flights →</a>
-        </div>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; min-width: 180px;">
+        <h4 style="margin: 0 0 6px 0; color: #b71c1c;">📍 {dest_name}, {dest_country}</h4>
+        <p style="margin: 0; font-size: 12px; color: #444;">{dest_desc}</p>
     </div>
     """
     folium.Marker(
