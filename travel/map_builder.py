@@ -60,7 +60,36 @@ def build_map(destination, itinerary, output_path=None, hotel=None, open_browser
         dest_lat, dest_lon = 0.0, 0.0
 
     center = [dest_lat, dest_lon]
-    map_object = folium.Map(location=center, zoom_start=11, control_scale=True, tiles="OpenStreetMap")
+    map_object = folium.Map(location=center, zoom_start=11, control_scale=True, tiles=None)
+
+    # 1. Primary Street Map (Esri — completely free, reliable, no 403 tile blocking on local file://)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, TomTom",
+        name="🗺️ Street Map",
+        max_zoom=19,
+        control=True,
+    ).add_to(map_object)
+
+    # 2. Topographic Map (terrain, mountains, contours)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; National Geographic, USGS",
+        name="🏔️ Topographic",
+        max_zoom=19,
+        control=True,
+    ).add_to(map_object)
+
+    # 3. Satellite Imagery (aerial views)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; Source: Esri, GeoEye, Earthstar Geographics",
+        name="🛰️ Satellite",
+        max_zoom=19,
+        control=True,
+    ).add_to(map_object)
+
+    folium.LayerControl(position="topright", collapsed=True).add_to(map_object)
 
     # Destination central marker
     dest_popup = f"""
