@@ -29,7 +29,7 @@ from travel.features import validate_request
 from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
-from travel.map_builder import build_map
+from travel.map_builder import build_map, open_map
 
 # ── colour palette ── Translucent glass over scenic travel imagery ───────────
 BG_DEEP       = "#141216"       # fallback dark
@@ -872,7 +872,10 @@ class TravelPlannerApp(tk.Tk):
         widget.bind("<Leave>", lambda e: widget.configure(bg=normal_bg))
 
     def _bind_mousewheel(self, canvas):
-        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-int(e.delta/120), "units"))
+        if sys.platform == "darwin":
+            canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1 * int(e.delta), "units"))
+        else:
+            canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-int(e.delta/120), "units"))
 
     def _unbind_mousewheel(self, canvas):
         canvas.unbind_all("<MouseWheel>")
@@ -1194,7 +1197,7 @@ class TravelPlannerApp(tk.Tk):
             btn_frame, text="  🗺️  Open Interactive Map in Browser  ", font=self.btn_font,
             bg=ACCENT_RED, fg="#ffffff", activebackground=ACCENT_DARK,
             activeforeground="#ffffff", relief="flat", bd=0, padx=20, pady=12,
-            cursor="hand2", command=lambda: webbrowser.open(str(map_path))
+            cursor="hand2", command=lambda: open_map(map_path)
         )
         map_btn.pack(side="left")
         self._bind_hover(map_btn, ACCENT_DARK, ACCENT_RED)
@@ -1240,7 +1243,7 @@ class TravelPlannerApp(tk.Tk):
     def _open_last_map(self):
         path = ROOT / "artifacts" / "travel_map.html"
         if path.exists():
-            webbrowser.open(str(path))
+            open_map(path)
         else:
             messagebox.showinfo("No Map", "No map has been generated yet.\nSearch and select a destination first.")
 
