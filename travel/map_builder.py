@@ -60,7 +60,7 @@ def build_map(destination, itinerary, output_path=None, hotel=None, open_browser
         dest_lat, dest_lon = 0.0, 0.0
 
     center = [dest_lat, dest_lon]
-    map_object = folium.Map(location=center, zoom_start=11, control_scale=True, tiles="CartoDB positron")
+    map_object = folium.Map(location=center, zoom_start=11, control_scale=True, tiles="OpenStreetMap")
 
     # Destination central marker
     dest_popup = f"""
