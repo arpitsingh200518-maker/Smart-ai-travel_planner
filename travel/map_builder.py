@@ -10,6 +10,8 @@ import webbrowser
 import folium
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 def open_map(output_path):
     """Open an HTML map file in the user's default browser reliably across platforms."""
@@ -173,7 +175,7 @@ def build_map(destination, itinerary, output_path=None, hotel=None, open_browser
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  SMART AI TRAVEL PLANNER — MAP BUILDER DEMO")
+    print("  SMART AI TRAVEL PLANNER -- MAP BUILDER DEMO")
     print("=" * 60)
 
     try:
@@ -191,9 +193,9 @@ if __name__ == "__main__":
         print(f"[+] Total stops: {total_stops}")
 
         saved_path = build_map(dest, itinerary, output_path=out_file, open_browser=True)
-        print(f"\n[✓] Map successfully built and saved to:\n    {saved_path}")
-        print("[✓] Opened in default web browser!")
+        print(f"\n[OK] Map successfully built and saved to:\n     {saved_path}")
+        print("[OK] Opened in default web browser!")
     except Exception as exc:
-        print(f"\n[!] Error building map: {exc}")
+        print(f"\n[ERROR] Error building map: {exc}")
         import traceback
         traceback.print_exc()
