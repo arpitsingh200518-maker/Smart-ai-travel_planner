@@ -30,6 +30,11 @@ from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map, open_map
+from travel.live_api import (
+    get_live_weather,
+    get_live_flight_search_url,
+    get_live_hotel_search_url,
+)
 
 # ── colour palette ── Translucent glass over scenic travel imagery ───────────
 BG_DEEP       = "#141216"       # fallback dark
@@ -1033,6 +1038,17 @@ class TravelPlannerApp(tk.Tk):
             tk.Label(row1, text=f"  {d['name']}, {d['country']}",
                      bg=GLASS_BG, fg=TEXT_PRIMARY, font=self.card_title_font).pack(side="left", padx=(8, 0))
 
+            # Live Weather Badge (Open-Meteo API)
+            lat = float(d.get("latitude", 0.0))
+            lon = float(d.get("longitude", 0.0))
+            w_info = get_live_weather(lat, lon)
+            if w_info.get("temperature") is not None:
+                weather_text = f" {w_info['icon']} {w_info['temperature']}{w_info['unit']} {w_info['condition']} "
+            else:
+                weather_text = f" 🌤️ {d.get('climate', 'Any').title()} "
+            tk.Label(row1, text=weather_text, bg=GLASS_INNER, fg=ACCENT_GOLD,
+                     font=("Segoe UI", 8, "bold"), padx=6, pady=2).pack(side="left", padx=(10, 0))
+
             score_frame = tk.Frame(row1, bg=GLASS_BG)
             score_frame.pack(side="right")
             tk.Label(score_frame, text="SCORE", bg=GLASS_BG, fg=TEXT_MUTED,
@@ -1090,6 +1106,26 @@ class TravelPlannerApp(tk.Tk):
 
             tk.Label(row4, text=f"🏨 {c['hotel_name']}", bg=GLASS_BG,
                      fg=TEXT_MUTED, font=self.small_font).pack(side="left")
+
+            flight_url = get_live_flight_search_url(d["name"], request.get("start_city", ""))
+            flight_btn = tk.Button(
+                row4, text=" ✈️ Live Flights ", font=("Segoe UI", 8, "bold"),
+                bg=GLASS_INNER, fg=TEXT_SECONDARY, activebackground=ACCENT_RED,
+                activeforeground="#ffffff", relief="flat", bd=0, padx=8, pady=4,
+                cursor="hand2", command=lambda u=flight_url: webbrowser.open(u)
+            )
+            flight_btn.pack(side="left", padx=(12, 0))
+            self._bind_hover(flight_btn, ACCENT_RED, GLASS_INNER)
+
+            hotel_url = get_live_hotel_search_url(d["name"], c.get("hotel_name", ""))
+            hotel_btn = tk.Button(
+                row4, text=" 🏨 Live Deals ", font=("Segoe UI", 8, "bold"),
+                bg=GLASS_INNER, fg=TEXT_SECONDARY, activebackground=BG_ELEVATED,
+                activeforeground="#ffffff", relief="flat", bd=0, padx=8, pady=4,
+                cursor="hand2", command=lambda u=hotel_url: webbrowser.open(u)
+            )
+            hotel_btn.pack(side="left", padx=(6, 0))
+            self._bind_hover(hotel_btn, BG_ELEVATED, GLASS_INNER)
 
             select_btn = tk.Button(
                 row4, text="  Select → Itinerary & Map  ", font=("Segoe UI", 10, "bold"),
