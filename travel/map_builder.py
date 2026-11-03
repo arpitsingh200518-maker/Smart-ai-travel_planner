@@ -22,6 +22,14 @@ def open_map(output_path):
         if sys.platform == "win32":
             os.startfile(str(p))
             return True
+        elif sys.platform == "darwin":
+            import subprocess
+            subprocess.run(["open", str(p)], check=True)
+            return True
+        else:
+            import subprocess
+            subprocess.run(["xdg-open", str(p)], check=True)
+            return True
     except Exception:
         pass
     try:
