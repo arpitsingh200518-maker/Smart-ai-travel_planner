@@ -53,7 +53,7 @@ def collect_request():
     })
 
 def print_costs(costs):
-    print(f"    Estimated total: ₹{costs['total']:,} | transport ₹{costs['transport']:,}, accommodation ₹{costs['accommodation']:,}, food ₹{costs['food']:,}, activities ₹{costs['activities']:,}")
+    print(f"    Estimated total: ₹{costs['total']:,} | transport by flight ₹{costs['transport']:,}, accommodation ₹{costs['accommodation']:,}, food ₹{costs['food']:,}, activities ₹{costs['activities']:,}")
     print(f"    Accommodation assumption: {costs['rooms']} room(s), {costs['nights']} night(s), cheapest listed option: {costs['hotel_name']}")
 
 def main():

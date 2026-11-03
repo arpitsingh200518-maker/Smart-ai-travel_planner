@@ -1064,7 +1064,7 @@ class TravelPlannerApp(tk.Tk):
                 costs_inner.columnconfigure(col_idx, weight=1)
 
             cost_items = [
-                ("Transport", money(c["transport"])),
+                ("Transport By Flight", money(c["transport"])),
                 (f"Stay ({c['rooms']}rm × {c['nights']}nt)", money(c["accommodation"])),
                 ("Food", money(c["food"])),
                 ("Activities", money(c["activities"])),

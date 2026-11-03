@@ -1225,7 +1225,7 @@ function renderDestCard(result, index) {
         <div class="dest-country">${esc(d.country)} · ${esc(d.region)}</div>
         <div class="dest-reasons">${result.reasons.map(r => `<span class="reason-tag">${esc(r)}</span>`).join('')}</div>
         <div class="dest-costs">
-          <div class="cost-item"><span class="cost-label">Transport</span><br><span class="cost-value">${money(c.transport)}</span></div>
+          <div class="cost-item"><span class="cost-label">Transport By Flight</span><br><span class="cost-value">${money(c.transport)}</span></div>
           <div class="cost-item"><span class="cost-label">Stay (${c.rooms} rm × ${c.nights} nt)</span><br><span class="cost-value">${money(c.accommodation)}</span></div>
           <div class="cost-item"><span class="cost-label">Food</span><br><span class="cost-value">${money(c.food)}</span></div>
           <div class="cost-item"><span class="cost-label">Activities</span><br><span class="cost-value">${money(c.activities)}</span></div>
