@@ -240,3 +240,4 @@ def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dic
         "is_international": is_international,
         "search_url": search_url,
     }
+
