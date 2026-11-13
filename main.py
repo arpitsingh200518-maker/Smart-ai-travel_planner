@@ -5,7 +5,8 @@ from travel.features import validate_request
 from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
-from travel.map_builder import build_map
+from travel.map_builder import build_map, open_map
+from travel.flight_api import get_current_location
 
 ROOT = Path(__file__).resolve().parent
 
@@ -41,6 +42,7 @@ def ask_float(prompt, default, minimum=1):
 
 def collect_request():
     print("\nEnter your trip requirements. All prices are illustrative estimates in INR.")
+    detected_origin = get_current_location().get("city", "Delhi")
     return validate_request({
         "scope": ask_choice("Trip scope", ["Domestic", "International", "Either"], "Either"),
         "people": ask_int("Number of Travellers", 2),
@@ -49,11 +51,19 @@ def collect_request():
         "climate": ask_choice("Preferred climate", ["Any", "Cold", "Mild", "Hot", "Dry", "Tropical"], "Any"),
         "group_type": ask_choice("Group type", ["Solo", "Couple", "Family", "Friends"], "Friends"),
         "interests": input("Interests, comma-separated (e.g. Nature,History,Food) [Nature]: ").strip() or "Nature",
-        "start_city": input("Starting city [Not specified]: ").strip() or "Anywhere",
+        "start_city": input(f"Flying from / Current Location [{detected_origin}]: ").strip() or detected_origin,
     })
 
 def print_costs(costs):
-    print(f"    Estimated total: ₹{costs['total']:,} | transport by flight ₹{costs['transport']:,}, accommodation ₹{costs['accommodation']:,}, food ₹{costs['food']:,}, activities ₹{costs['activities']:,}")
+    origin = costs.get("flight_origin", "Departure City")
+    dur = costs.get("flight_duration", "")
+    dist = costs.get("flight_distance_km", "")
+    flight_pp = costs.get("flight_per_person", costs["transport"])
+    flight_info = f"flight from {origin}"
+    if dur: flight_info += f" ({dur}, {dist} km)"
+    print(f"    Estimated total: ₹{costs['total']:,} | {flight_info} ₹{costs['transport']:,} (₹{flight_pp:,}/pp), accommodation ₹{costs['accommodation']:,}, food ₹{costs['food']:,}, activities ₹{costs['activities']:,}")
+    if costs.get("flight_search_url"):
+        print(f"    Live Flights: {costs['flight_search_url']}")
     print(f"    Accommodation assumption: {costs['rooms']} room(s), {costs['nights']} night(s), cheapest listed option: {costs['hotel_name']}")
 
 def main():

@@ -30,6 +30,7 @@ from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map, open_map
+from travel.flight_api import get_current_location, get_live_flight_quote
 
 # ── colour palette ── Translucent glass over scenic travel imagery ───────────
 BG_DEEP       = "#141216"       # fallback dark
@@ -424,7 +425,7 @@ class TravelPlannerApp(tk.Tk):
         self._t_lbl_climate = self.planner_canvas.create_text(0, 0, text="CLIMATE", font=self.label_font, fill=ACCENT_GOLD, anchor="w")
         self._t_lbl_group = self.planner_canvas.create_text(0, 0, text="GROUP TYPE", font=self.label_font, fill=ACCENT_GOLD, anchor="w")
         self._t_lbl_interests = self.planner_canvas.create_text(0, 0, text="INTERESTS (COMMA-SEP)", font=self.label_font, fill=ACCENT_GOLD, anchor="w")
-        self._t_lbl_start = self.planner_canvas.create_text(0, 0, text="STARTING CITY", font=self.label_font, fill=ACCENT_GOLD, anchor="w")
+        self._t_lbl_start = self.planner_canvas.create_text(0, 0, text="FLYING FROM (CURRENT LOCATION / AIRPORT)", font=self.label_font, fill=ACCENT_GOLD, anchor="w")
 
         # ── Form Inputs (placed cleanly with create_window) ──
         self.scope_var = tk.StringVar(value="Either")
@@ -458,7 +459,8 @@ class TravelPlannerApp(tk.Tk):
         self.interests_frame, self.interests_entry = self._create_canvas_entry(self.interests_var)
         self._win_interests = self.planner_canvas.create_window(0, 0, window=self.interests_frame, anchor="nw")
 
-        self.start_var = tk.StringVar(value="")
+        detected_origin = get_current_location().get("city", "Delhi")
+        self.start_var = tk.StringVar(value=detected_origin)
         self.start_frame, self.start_entry = self._create_canvas_entry(self.start_var)
         self._win_start = self.planner_canvas.create_window(0, 0, window=self.start_frame, anchor="nw")
 
@@ -1066,8 +1068,12 @@ class TravelPlannerApp(tk.Tk):
             for col_idx in range(5):
                 costs_inner.columnconfigure(col_idx, weight=1)
 
+            flight_origin = c.get("flight_origin") or request.get("start_city") or "Current Location"
+            flight_dur = c.get("flight_duration", "")
+            flight_dist = c.get("flight_distance_km", 0)
+
             cost_items = [
-                ("Transport By Flight", money(c["transport"])),
+                (f"Flight from {flight_origin}", money(c["transport"])),
                 (f"Stay ({c['rooms']}rm × {c['nights']}nt)", money(c["accommodation"])),
                 ("Food", money(c["food"])),
                 ("Activities", money(c["activities"])),
@@ -1090,6 +1096,17 @@ class TravelPlannerApp(tk.Tk):
 
             tk.Label(row4, text=f"🏨 {c['hotel_name']}", bg=GLASS_BG,
                      fg=TEXT_MUTED, font=self.small_font).pack(side="left")
+
+            flight_search_url = c.get("flight_search_url") or f"https://www.google.com/travel/flights?q=Flights+from+{flight_origin}+to+{d['name']}"
+            btn_txt = f" ✈️ Live Flights ({flight_dur}) " if flight_dur else " ✈️ Live Flights "
+            flight_btn = tk.Button(
+                row4, text=btn_txt, font=("Segoe UI", 8, "bold"),
+                bg=GLASS_INNER, fg=TEXT_SECONDARY, activebackground=ACCENT_RED,
+                activeforeground="#ffffff", relief="flat", bd=0, padx=8, pady=4,
+                cursor="hand2", command=lambda u=flight_search_url: webbrowser.open(u)
+            )
+            flight_btn.pack(side="left", padx=(12, 0))
+            self._bind_hover(flight_btn, ACCENT_RED, GLASS_INNER)
 
             select_btn = tk.Button(
                 row4, text="  Select → Itinerary & Map  ", font=("Segoe UI", 10, "bold"),
