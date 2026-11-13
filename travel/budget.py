@@ -29,15 +29,15 @@ def estimate_budget(destination, hotels, request):
     food = float(destination["food_per_person_day"]) * people * days
     activities = float(destination["activities_per_person"]) * people
     
-    total_min = transport_min + accommodation + food + activities
-    total_max = transport_max + accommodation + food + activities
+    total_min = int(round(transport_min + accommodation + food + activities))
+    total_max = int(round(transport_max + accommodation + food + activities))
     total = total_min
 
     return {
-        "transport": round(transport),
-        "transport_min": round(transport_min),
-        "transport_max": round(transport_max),
-        "transport_range_str": f"₹{transport_min:,} - ₹{transport_max:,}",
+        "transport": int(round(transport)),
+        "transport_min": int(round(transport_min)),
+        "transport_max": int(round(transport_max)),
+        "transport_range_str": f"₹{int(round(transport_min)):,} - ₹{int(round(transport_max)):,}",
         "flight_min": flight_min_pp,
         "flight_max": flight_max_pp,
         "flight_per_person": flight_min_pp,
@@ -46,12 +46,12 @@ def estimate_budget(destination, hotels, request):
         "flight_distance_km": flight_quote["distance_km"],
         "flight_duration": flight_quote["duration_str"],
         "flight_search_url": flight_quote["search_url"],
-        "accommodation": round(accommodation),
-        "food": round(food),
-        "activities": round(activities),
-        "total": round(total),
-        "total_min": round(total_min),
-        "total_max": round(total_max),
+        "accommodation": int(round(accommodation)),
+        "food": int(round(food)),
+        "activities": int(round(activities)),
+        "total": total,
+        "total_min": total_min,
+        "total_max": total_max,
         "total_range_str": f"₹{total_min:,} - ₹{total_max:,}",
         "rooms": rooms,
         "nights": nights,
