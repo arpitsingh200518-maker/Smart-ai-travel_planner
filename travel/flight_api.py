@@ -8,7 +8,14 @@ import math
 import json
 import urllib.parse
 import urllib.request
+from collections import namedtuple
 from typing import Dict, Any, Tuple, Optional
+
+# Named tuple for flight fares supporting tuple unpacking and named attributes
+class FlightFare(namedtuple("FlightFare", ["price_min", "price_max", "duration_str"])):
+    @property
+    def range_str(self) -> str:
+        return f"₹{self.price_min:,} - ₹{self.price_max:,}"
 
 # In-memory caches to ensure fast responses and offline tolerance
 _LOCATION_CACHE: Dict[str, Tuple[float, float, str, str]] = {}
@@ -141,12 +148,12 @@ def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) ->
     return R * c
 
 
-def calculate_flight_fare(distance_km: float, is_international: bool = False) -> Tuple[int, str]:
+def calculate_flight_fare(distance_km: float, is_international: bool = False) -> FlightFare:
     """
     Live flight pricing engine:
-    Computes realistic commercial economy flight ticket price (in INR) based on distance,
-    route classification (domestic vs international), fuel surcharge, and airport fees.
-    Also returns estimated flight duration string (e.g. '2h 15m').
+    Computes realistic commercial flight ticket price range (cheapest saver fare to maximum peak/flex fare in INR)
+    based on distance, route classification (domestic vs international), fuel surcharge, and airport fees.
+    Returns FlightFare(price_min, price_max, duration_str).
     """
     dist = max(30.0, distance_km)
 
@@ -164,42 +171,54 @@ def calculate_flight_fare(distance_km: float, is_international: bool = False) ->
         if dist < 450:
             # Short hop (e.g. Delhi-Jaipur, Mumbai-Goa)
             base_price = 2200 + (dist * 2.1)
+            min_factor, max_factor = 0.78, 2.35
         elif dist < 1200:
-            # Medium haul (e.g. Delhi-Mumbai, Bangalore-Goa)
+            # Medium haul (e.g. Delhi-Mumbai, Delhi-Varanasi, Bangalore-Goa)
             base_price = 3200 + (dist * 1.85)
+            min_factor, max_factor = 0.70, 2.25
         elif dist < 2200:
-            # Long domestic (e.g. Delhi-Kerala, Kolkata-Bangalore)
+            # Long domestic (e.g. Delhi-Kerala, Kolkata-Bangalore, Delhi-Goa)
             base_price = 4200 + (dist * 1.65)
+            min_factor, max_factor = 0.68, 2.05
         else:
             # Extended domestic (e.g. Delhi-Andaman, Leh-Kochi)
             base_price = 5500 + (dist * 1.55)
+            min_factor, max_factor = 0.72, 2.00
     else:
         # International Flight Pricing (includes international departure tax & long range)
         if dist < 2500:
             # Regional International (e.g. India to Kathmandu, Bangkok, Dubai)
             base_price = 7500 + (dist * 2.5)
+            min_factor, max_factor = 0.75, 2.15
         elif dist < 5000:
             # Mid-haul International (e.g. India to Singapore, KL, Central Asia)
             base_price = 11000 + (dist * 2.2)
+            min_factor, max_factor = 0.75, 2.10
         elif dist < 8000:
             # Long-haul International (e.g. India to Europe, Japan)
             base_price = 24000 + (dist * 2.6)
+            min_factor, max_factor = 0.78, 2.15
         else:
             # Ultra long-haul (e.g. India to USA, Australia)
             base_price = 38000 + (dist * 2.8)
+            min_factor, max_factor = 0.80, 2.10
 
-    # Round to neat airfare figure (ending in 00 or 50)
-    final_price = int(round(base_price / 50.0) * 50)
-    final_price = max(1800, final_price)
+    # Calculate cheapest (saver) and maximum (peak/flex) ticket fares
+    min_price = int(round((base_price * min_factor) / 100.0) * 100)
+    max_price = int(round((base_price * max_factor) / 100.0) * 100)
 
-    return final_price, duration_str
+    # Ensure baseline boundaries
+    min_price = max(1800, min_price)
+    max_price = max(min_price + 1500, max_price)
+
+    return FlightFare(min_price, max_price, duration_str)
 
 
 def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dict[str, Any]:
     """
     Main live flight quote entrypoint.
     Takes user-entered location or defaults to detected current location,
-    resolves coordinates, and calculates live flight ticket price to the destination.
+    resolves coordinates, and calculates live flight ticket price range to the destination.
     """
     # 1. Resolve Origin
     orig_lat, orig_lon, origin_city, origin_country = resolve_location(origin_input)
@@ -221,15 +240,21 @@ def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dic
     # 3. Calculate Distance
     dist_km = haversine_distance_km(orig_lat, orig_lon, dest_lat, dest_lon)
 
-    # 4. Calculate Live Flight Ticket Price & Duration
-    price_per_person, duration_str = calculate_flight_fare(dist_km, is_international)
+    # 4. Calculate Live Flight Ticket Price Range & Duration
+    fare = calculate_flight_fare(dist_km, is_international)
+    price_min = fare.price_min
+    price_max = fare.price_max
+    duration_str = fare.duration_str
 
     # 5. Live Deep Link to Google Flights for instant real booking
     query = f"Flights from {origin_city} to {dest_name}"
     search_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
 
     return {
-        "price_per_person": price_per_person,
+        "price_min": price_min,
+        "price_max": price_max,
+        "price_range_str": f"₹{price_min:,} - ₹{price_max:,}",
+        "price_per_person": price_min,  # Baseline saver fare for budget filtering
         "origin_city": origin_city,
         "origin_country": origin_country,
         "origin_coordinates": (orig_lat, orig_lon),

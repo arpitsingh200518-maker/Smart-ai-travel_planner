@@ -1035,17 +1035,50 @@ function calculateFlightFare(originName, dest) {
   const a = Math.sin(dlat/2)**2 + Math.cos(origin[0]*Math.PI/180) * Math.cos(dest.latitude*Math.PI/180) * Math.sin(dlon/2)**2;
   const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const isInt = dest.scope === 'international';
-  let base;
+  let base, minFactor, maxFactor;
   if (!isInt) {
-    base = dist < 450 ? 2200 + dist * 2.1 : dist < 1200 ? 3200 + dist * 1.85 : 4200 + dist * 1.65;
+    if (dist < 450) {
+      base = 2200 + dist * 2.1;
+      minFactor = 0.78; maxFactor = 2.35;
+    } else if (dist < 1200) {
+      base = 3200 + dist * 1.85;
+      minFactor = 0.70; maxFactor = 2.25;
+    } else if (dist < 2200) {
+      base = 4200 + dist * 1.65;
+      minFactor = 0.68; maxFactor = 2.05;
+    } else {
+      base = 5500 + dist * 1.55;
+      minFactor = 0.72; maxFactor = 2.00;
+    }
   } else {
-    base = dist < 2500 ? 7500 + dist * 2.5 : dist < 5000 ? 11000 + dist * 2.2 : 24000 + dist * 2.6;
+    if (dist < 2500) {
+      base = 7500 + dist * 2.5;
+      minFactor = 0.75; maxFactor = 2.15;
+    } else if (dist < 5000) {
+      base = 11000 + dist * 2.2;
+      minFactor = 0.75; maxFactor = 2.10;
+    } else if (dist < 8000) {
+      base = 24000 + dist * 2.6;
+      minFactor = 0.78; maxFactor = 2.15;
+    } else {
+      base = 38000 + dist * 2.8;
+      minFactor = 0.80; maxFactor = 2.10;
+    }
   }
-  const flightPrice = Math.max(1800, Math.round(base / 50) * 50);
+  const minPrice = Math.max(1800, Math.round((base * minFactor) / 100) * 100);
+  const maxPrice = Math.max(minPrice + 1500, Math.round((base * maxFactor) / 100) * 100);
   const hrs = Math.floor(dist / 750 + 0.6);
   const mins = Math.round(((dist / 750 + 0.6) - hrs) * 60 / 5) * 5;
   const durStr = `${hrs}h ${mins > 0 ? mins + 'm' : ''}`;
-  return { flightPrice, distKm: Math.round(dist), durStr, origin: (originName || 'Delhi').trim() };
+  return {
+    flightMin: minPrice,
+    flightMax: maxPrice,
+    flightPrice: minPrice,
+    rangeStr: `₹${minPrice.toLocaleString('en-IN')} - ₹${maxPrice.toLocaleString('en-IN')}`,
+    distKm: Math.round(dist),
+    durStr,
+    origin: (originName || 'Delhi').trim()
+  };
 }
 
 function estimateBudget(dest, request) {
@@ -1064,20 +1097,31 @@ function estimateBudget(dest, request) {
     hotelName = cheapest.hotel_name;
   }
   const flightInfo = calculateFlightFare(request.start_city, dest);
-  const transport = flightInfo.flightPrice * people;
+  const transportMin = flightInfo.flightMin * people;
+  const transportMax = flightInfo.flightMax * people;
   const accommodation = hotelRate * rooms * nights;
   const food = dest.food_per_person_day * people * days;
   const activities = dest.activities_per_person * people;
-  const total = transport + accommodation + food + activities;
+  const totalMin = transportMin + accommodation + food + activities;
+  const totalMax = transportMax + accommodation + food + activities;
   return {
-    transport: Math.round(transport),
+    transport: Math.round(transportMin),
+    transport_min: Math.round(transportMin),
+    transport_max: Math.round(transportMax),
+    transport_range_str: `₹${Math.round(transportMin).toLocaleString('en-IN')} - ₹${Math.round(transportMax).toLocaleString('en-IN')}`,
+    flight_min: flightInfo.flightMin,
+    flight_max: flightInfo.flightMax,
+    flight_range_str: flightInfo.rangeStr,
     flight_origin: flightInfo.origin,
     flight_duration: flightInfo.durStr,
-    flight_per_person: flightInfo.flightPrice,
+    flight_per_person: flightInfo.flightMin,
     accommodation: Math.round(accommodation),
     food: Math.round(food),
     activities: Math.round(activities),
-    total: Math.round(total),
+    total: Math.round(totalMin),
+    total_min: Math.round(totalMin),
+    total_max: Math.round(totalMax),
+    total_range_str: `₹${Math.round(totalMin).toLocaleString('en-IN')} - ₹${Math.round(totalMax).toLocaleString('en-IN')}`,
     rooms,
     nights,
     hotel_name: hotelName
@@ -1269,14 +1313,14 @@ function renderDestCard(result, index) {
         <div class="dest-country">${esc(d.country)} · ${esc(d.region)}</div>
         <div class="dest-reasons">${result.reasons.map(r => `<span class="reason-tag">${esc(r)}</span>`).join('')}</div>
         <div class="dest-costs">
-          <div class="cost-item"><span class="cost-label">Flight from ${esc(c.flight_origin || 'Origin')}</span><br><span class="cost-value">${money(c.transport)}</span></div>
+          <div class="cost-item"><span class="cost-label">Flight from ${esc(c.flight_origin || 'Origin')}</span><br><span class="cost-value">${c.transport_range_str || money(c.transport)}</span></div>
           <div class="cost-item"><span class="cost-label">Stay (${c.rooms} rm × ${c.nights} nt)</span><br><span class="cost-value">${money(c.accommodation)}</span></div>
           <div class="cost-item"><span class="cost-label">Food</span><br><span class="cost-value">${money(c.food)}</span></div>
           <div class="cost-item"><span class="cost-label">Activities</span><br><span class="cost-value">${money(c.activities)}</span></div>
         </div>
         <div class="dest-total">
           <span class="total-label">Estimated total</span>
-          <span class="total-value">${money(c.total)}</span>
+          <span class="total-value">${c.total_range_str || money(c.total)}</span>
         </div>
       </div>
       <button class="dest-select-btn" type="button">Select for Itinerary & Map ↗</button>

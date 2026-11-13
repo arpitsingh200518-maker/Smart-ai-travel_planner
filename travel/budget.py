@@ -19,17 +19,29 @@ def estimate_budget(destination, hotels, request):
     # Live Flight Pricing from user's current location or departure city
     origin = request.get("start_city", "")
     flight_quote = get_live_flight_quote(origin, destination)
-    flight_price_pp = flight_quote["price_per_person"]
-    transport = flight_price_pp * people
+    flight_min_pp = flight_quote["price_min"]
+    flight_max_pp = flight_quote["price_max"]
+    transport_min = flight_min_pp * people
+    transport_max = flight_max_pp * people
+    transport = transport_min  # Keep baseline as cheapest saver fare
 
     accommodation = hotel_rate * rooms * nights
     food = float(destination["food_per_person_day"]) * people * days
     activities = float(destination["activities_per_person"]) * people
-    total = transport + accommodation + food + activities
+    
+    total_min = transport_min + accommodation + food + activities
+    total_max = transport_max + accommodation + food + activities
+    total = total_min
 
     return {
         "transport": round(transport),
-        "flight_per_person": round(flight_price_pp),
+        "transport_min": round(transport_min),
+        "transport_max": round(transport_max),
+        "transport_range_str": f"₹{transport_min:,} - ₹{transport_max:,}",
+        "flight_min": flight_min_pp,
+        "flight_max": flight_max_pp,
+        "flight_per_person": flight_min_pp,
+        "flight_range_str": f"₹{flight_min_pp:,} - ₹{flight_max_pp:,}",
         "flight_origin": flight_quote["origin_city"],
         "flight_distance_km": flight_quote["distance_km"],
         "flight_duration": flight_quote["duration_str"],
@@ -38,6 +50,9 @@ def estimate_budget(destination, hotels, request):
         "food": round(food),
         "activities": round(activities),
         "total": round(total),
+        "total_min": round(total_min),
+        "total_max": round(total_max),
+        "total_range_str": f"₹{total_min:,} - ₹{total_max:,}",
         "rooms": rooms,
         "nights": nights,
         "hotel_name": hotel_name,

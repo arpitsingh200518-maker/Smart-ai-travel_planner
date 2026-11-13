@@ -1071,9 +1071,12 @@ class TravelPlannerApp(tk.Tk):
             flight_origin = c.get("flight_origin") or request.get("start_city") or "Current Location"
             flight_dur = c.get("flight_duration", "")
             flight_dist = c.get("flight_distance_km", 0)
+            flight_pp_range = c.get("flight_range_str", "")
+            transport_range = c.get("transport_range_str") or money(c["transport"])
+            total_range = c.get("total_range_str") or money(c["total"])
 
             cost_items = [
-                (f"Flight from {flight_origin}", money(c["transport"])),
+                (f"Flight from {flight_origin}", transport_range),
                 (f"Stay ({c['rooms']}rm × {c['nights']}nt)", money(c["accommodation"])),
                 ("Food", money(c["food"])),
                 ("Activities", money(c["activities"])),
@@ -1082,20 +1085,25 @@ class TravelPlannerApp(tk.Tk):
                 tk.Label(costs_inner, text=lbl_text, bg=GLASS_BG, fg=TEXT_MUTED,
                          font=("Segoe UI", 8)).grid(row=0, column=ci, sticky="w", padx=4)
                 tk.Label(costs_inner, text=val_text, bg=GLASS_BG, fg=TEXT_PRIMARY,
-                         font=("Segoe UI", 10, "bold")).grid(row=1, column=ci, sticky="w", padx=4)
+                         font=("Segoe UI", 9, "bold")).grid(row=1, column=ci, sticky="w", padx=4)
 
             # Total
-            tk.Label(costs_inner, text="TOTAL", bg=GLASS_BG, fg=TEXT_MUTED,
+            tk.Label(costs_inner, text="EST. TOTAL", bg=GLASS_BG, fg=TEXT_MUTED,
                      font=("Segoe UI", 8)).grid(row=0, column=4, sticky="e", padx=4)
-            tk.Label(costs_inner, text=money(c["total"]), bg=GLASS_BG, fg=color,
-                     font=self.money_font).grid(row=1, column=4, sticky="e", padx=4)
+            tk.Label(costs_inner, text=total_range, bg=GLASS_BG, fg=color,
+                     font=("Segoe UI", 11, "bold")).grid(row=1, column=4, sticky="e", padx=4)
 
-            # Row 4: Hotel info + Select button
+            # Row 4: Hotel info + Flight per-person range badge + Select button
             row4 = tk.Frame(content, bg=GLASS_BG)
             row4.pack(fill="x", pady=(10, 0))
 
             tk.Label(row4, text=f"🏨 {c['hotel_name']}", bg=GLASS_BG,
                      fg=TEXT_MUTED, font=self.small_font).pack(side="left")
+
+            if flight_pp_range:
+                fare_lbl = tk.Label(row4, text=f"✈️ Flights: {flight_pp_range}/seat", bg=GLASS_BG,
+                                    fg=ACCENT_CYAN, font=("Segoe UI", 8, "bold"))
+                fare_lbl.pack(side="left", padx=(12, 0))
 
             flight_search_url = c.get("flight_search_url") or f"https://www.google.com/travel/flights?q=Flights+from+{flight_origin}+to+{d['name']}"
             btn_txt = f" ✈️ Live Flights ({flight_dur}) " if flight_dur else " ✈️ Live Flights "
@@ -1105,7 +1113,7 @@ class TravelPlannerApp(tk.Tk):
                 activeforeground="#ffffff", relief="flat", bd=0, padx=8, pady=4,
                 cursor="hand2", command=lambda u=flight_search_url: webbrowser.open(u)
             )
-            flight_btn.pack(side="left", padx=(12, 0))
+            flight_btn.pack(side="left", padx=(10, 0))
             self._bind_hover(flight_btn, ACCENT_RED, GLASS_INNER)
 
             select_btn = tk.Button(

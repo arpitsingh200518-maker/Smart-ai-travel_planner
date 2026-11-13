@@ -47,14 +47,21 @@ class FlightAPITests(unittest.TestCase):
         self.assertLess(dist, 1300)
 
     def test_calculate_flight_fare_pricing(self):
-        price, duration = calculate_flight_fare(1150, is_international=False)
-        self.assertGreater(price, 2000)
-        self.assertIn("h", duration)
+        fare = calculate_flight_fare(1150, is_international=False)
+        self.assertGreater(fare.price_min, 2000)
+        self.assertGreater(fare.price_max, fare.price_min)
+        self.assertIn("h", fare.duration_str)
+        # Unpack testing
+        p_min, p_max, dur = calculate_flight_fare(1150, is_international=False)
+        self.assertEqual(p_min, fare.price_min)
+        self.assertEqual(p_max, fare.price_max)
 
     def test_live_flight_quote(self):
         dest = self.frames["destinations"].iloc[0].to_dict()  # Goa
         quote = get_live_flight_quote("Delhi", dest)
-        self.assertGreater(quote["price_per_person"], 0)
+        self.assertGreater(quote["price_min"], 0)
+        self.assertGreater(quote["price_max"], quote["price_min"])
+        self.assertIn("-", quote["price_range_str"])
         self.assertEqual(quote["origin_city"], "Delhi")
         self.assertIn("google.com/travel/flights", quote["search_url"])
 
@@ -74,6 +81,10 @@ class FlightAPITests(unittest.TestCase):
 
         # Flights from Delhi to Goa are farther than Mumbai to Goa, so transport must differ
         self.assertGreater(costs_delhi["transport"], costs_mumbai["transport"])
+        self.assertIn("-", costs_delhi["transport_range_str"])
+        self.assertIn("-", costs_delhi["flight_range_str"])
+        self.assertIn("-", costs_delhi["total_range_str"])
+        self.assertGreater(costs_delhi["total_max"], costs_delhi["total_min"])
         self.assertEqual(costs_delhi["total"], costs_delhi["transport"] + costs_delhi["accommodation"] + costs_delhi["food"] + costs_delhi["activities"])
 
 if __name__ == "__main__":
