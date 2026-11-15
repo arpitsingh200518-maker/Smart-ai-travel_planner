@@ -31,6 +31,30 @@ class PlannerTests(unittest.TestCase):
     def test_loads_all_destinations(self):
         self.assertEqual(len(self.frames["destinations"]), 30)
 
+    def test_destinations_csv_has_market_flight_columns(self):
+        destinations = self.frames["destinations"]
+        self.assertIn("flight_price_min", destinations.columns)
+        self.assertIn("flight_price_max", destinations.columns)
+        self.assertIn("flight_duration", destinations.columns)
+        self.assertIn("transport_per_person", destinations.columns)
+        self.assertTrue(all(destinations["flight_price_min"] > 0))
+        self.assertTrue(all(destinations["flight_price_max"] > destinations["flight_price_min"]))
+
+    def test_estimate_budget_uses_csv_market_pricing(self):
+        dest = self.frames["destinations"].iloc[0].to_dict()
+        req = {
+            "people": 2, "days": 3, "budget": 50000,
+            "scope": "domestic", "start_city": "Delhi",
+        }
+        costs = estimate_budget(dest, self.frames["hotels"], req)
+        expected_transport = dest["flight_price_min"] * 2
+        self.assertEqual(costs["transport"], expected_transport)
+        self.assertIn("-", costs["transport_range_str"])
+        self.assertIn("-", costs["flight_range_str"])
+        self.assertIn("-", costs["total_range_str"])
+        self.assertGreater(costs["total_max"], costs["total_min"])
+        self.assertEqual(costs["total"], costs["transport"] + costs["accommodation"] + costs["food"] + costs["activities"])
+
     def test_invalid_budget_is_rejected(self):
         with self.assertRaises(ValueError):
             validate_request({"people": 2, "days": 3, "budget": 0})

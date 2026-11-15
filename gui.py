@@ -30,7 +30,6 @@ from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map, open_map
-from travel.flight_api import get_current_location, get_live_flight_quote
 
 # ── colour palette ── Translucent glass over scenic travel imagery ───────────
 BG_DEEP       = "#141216"       # fallback dark
@@ -459,8 +458,8 @@ class TravelPlannerApp(tk.Tk):
         self.interests_frame, self.interests_entry = self._create_canvas_entry(self.interests_var)
         self._win_interests = self.planner_canvas.create_window(0, 0, window=self.interests_frame, anchor="nw")
 
-        detected_origin = get_current_location().get("city", "Delhi")
-        self.start_var = tk.StringVar(value=detected_origin)
+        default_origin = "Delhi"
+        self.start_var = tk.StringVar(value=default_origin)
         self.start_frame, self.start_entry = self._create_canvas_entry(self.start_var)
         self._win_start = self.planner_canvas.create_window(0, 0, window=self.start_frame, anchor="nw")
 

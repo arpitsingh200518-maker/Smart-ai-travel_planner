@@ -6,7 +6,6 @@ from travel.model import train_model
 from travel.recommender import recommend_destinations
 from travel.itinerary import build_itinerary
 from travel.map_builder import build_map, open_map
-from travel.flight_api import get_current_location
 
 ROOT = Path(__file__).resolve().parent
 
@@ -42,7 +41,7 @@ def ask_float(prompt, default, minimum=1):
 
 def collect_request():
     print("\nEnter your trip requirements. All prices are illustrative estimates in INR.")
-    detected_origin = get_current_location().get("city", "Delhi")
+    default_origin = "Delhi"
     return validate_request({
         "scope": ask_choice("Trip scope", ["Domestic", "International", "Either"], "Either"),
         "people": ask_int("Number of Travellers", 2),
@@ -51,7 +50,7 @@ def collect_request():
         "climate": ask_choice("Preferred climate", ["Any", "Cold", "Mild", "Hot", "Dry", "Tropical"], "Any"),
         "group_type": ask_choice("Group type", ["Solo", "Couple", "Family", "Friends"], "Friends"),
         "interests": input("Interests, comma-separated (e.g. Nature,History,Food) [Nature]: ").strip() or "Nature",
-        "start_city": input(f"Flying from / Current Location [{detected_origin}]: ").strip() or detected_origin,
+        "start_city": input(f"Flying from / Current Location [{default_origin}]: ").strip() or default_origin,
     })
 
 def print_costs(costs):
