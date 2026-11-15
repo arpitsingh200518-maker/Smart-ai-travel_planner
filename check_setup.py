@@ -5,7 +5,7 @@ from pathlib import Path
 def main():
     print("Python:", sys.version.split()[0])
     root = Path(__file__).resolve().parent
-    missing = [str(root / "data" / name) for name in ("destinations.csv", "hotels.csv", "attractions.csv") if not (root / "data" / name).exists()]
+    missing = [str(root / "data" / name) for name in ("destinations.csv", "hotels.csv", "attractions.csv", "flights.csv") if not (root / "data" / name).exists()]
     if missing:
         print("Missing data files:")
         print("\n".join(missing))
@@ -20,6 +20,7 @@ def main():
         print("Destinations:", len(frames["destinations"]))
         print("Hotels:", len(frames["hotels"]))
         print("Attractions:", len(frames["attractions"]))
+        print("Flights:", len(frames["flights"]))
     except Exception as exc:
         print("Setup check failed:", exc)
         print("Install dependencies with: python -m pip install -r requirements.txt")

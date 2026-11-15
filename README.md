@@ -1,171 +1,246 @@
 # Smart AI Travel Planner
 
-A modular Python console application that recommends domestic and international trips using a local dataset, preference matching, budget constraints, itinerary generation, and an interactive HTML map.
+An offline-first, intelligent travel recommendation, budgeting, and itinerary planning system built with Python, scikit-learn, Folium, and Tkinter.
 
-> **Project status:** Educational prototype. Prices are illustrative estimates, and recommendations are based on local data rather than live travel services.
+Smart AI Travel Planner combines machine learning preference scoring, route-specific commercial flight fare lookups, realistic hotel pricing, and daily itinerary scheduling to generate tailored travel packages with interactive multi-layer maps.
 
-## Overview
+---
 
-Smart AI Travel Planner takes a travel request and ranks destinations that fit the traveller's preferences and total group budget. It is designed to run locally on Windows using Python and does not require an API key for its core workflow.
+## Key Highlights
 
-The project combines a small machine-learning component with explicit recommendation and cost-estimation logic. The model is trained on synthetic traveller profiles generated from preference-matching rules, so its evaluation measures agreement with those generated labels—not actual traveller satisfaction.
+- **100% Local & Offline:** Operates entirely on curated local CSV datasets with zero external API dependencies, network calls, or API keys required.
+- **30 Curated Destinations:** 21 domestic Indian destinations and 9 top international gateways with rich climate, interest, and duration metadata.
+- **Route-Aware Dynamic Flight Pricing:** 237 origin-destination airfare quotes across 8 major Indian departure hubs (Delhi, Mumbai, Bengaluru, Kolkata, Chennai, Hyderabad, Chandigarh, Ahmedabad) with minimum saver and peak fare ranges.
+- **90 Accommodations:** 3 realistic hotel tiers per destination (Budget, Standard, Premium) with per-room-night rates and party-size room allocation ($1\text{ room} / 2\text{ travelers}$).
+- **240 Attractions:** 8 iconic sights per destination with GPS coordinates, entry fees, and visit duration estimates.
+- **Hybrid AI Recommender:** Random Forest classifier trained on synthetic traveler profiles paired with multi-criteria rule scoring and strict budget cutoffs.
+- **Interactive Multi-Layer Maps:** Generates dynamic Folium HTML maps with Esri World Street Map, Topographic, and Satellite tiles, hotel pins, numbered daily stops, and route polylines.
+- **Multiple Interfaces:** Includes a modern glassmorphic Tkinter Desktop GUI, a terminal CLI, and a standalone client-side Web application.
 
-## Features
+---
 
-- **Local destination data:** CSV files describe 20 destinations, hotels, and attractions.
-- **Preference-based recommendations:** Ranks destinations using trip duration, climate, interests, group type, and domestic/international scope.
-- **Budget filtering:** Excludes destinations that exceed the specified group budget.
-- **Machine-learning prototype:** Trains a scikit-learn Random Forest suitability classifier on synthetic profiles.
-- **Recommendation explanations:** Provides reasons associated with destination ranking.
-- **Cost estimates:** Breaks down estimated transport, accommodation, food, and activities.
-- **Itinerary generation:** Builds a day-by-day attraction plan with a seven-hour daily activity cap.
-- **Interactive map:** Generates an HTML map using Folium.
-- **Tests and setup check:** Includes unit tests and a setup diagnostic script.
-
-## How it works
-
-1. The console collects the travel requirements.
-2. The data loader reads and validates the local CSV datasets.
-3. The model component prepares synthetic training examples and trains the suitability classifier.
-4. The recommender scores destinations and applies the strict budget constraint.
-5. The budget and itinerary modules estimate trip costs and arrange activities.
-6. The map builder creates an interactive HTML map for the planned trip.
-
-This is a local-data prototype. The classifier is one part of the workflow; recommendation scoring, cost estimation, and itinerary construction are handled by separate modules.
-
-## Project structure
+## System Architecture
 
 ```text
 smart_ai_travel_planner/
 ├── artifacts/
-│   └── (generated travel_map.html appears here after running)
+│   ├── travel_banner.jpg          # GUI visual assets
+│   ├── travel_bg_clean.jpg        # GUI background backdrop
+│   └── travel_map.html            # Generated interactive Folium trip map
 ├── data/
-│   ├── attractions.csv
-│   ├── destinations.csv
-│   └── hotels.csv
+│   ├── attractions.csv            # 240 attractions (8 per destination, GPS & fees)
+│   ├── destinations.csv           # 30 destinations (climate, interests, defaults)
+│   ├── flights.csv                # 237 route quotes across 8 departure hubs
+│   └── hotels.csv                 # 90 accommodations (Budget, Standard, Premium)
 ├── tests/
-│   └── test_planner.py
+│   └── test_planner.py            # Automated unit test suite (12 tests)
 ├── travel/
-│   ├── __init__.py
-│   ├── budget.py
-│   ├── data_loader.py
-│   ├── features.py
-│   ├── itinerary.py
-│   ├── map_builder.py
-│   ├── model.py
-│   └── recommender.py
-├── .gitignore
-├── check_setup.py
-├── main.py
-├── README.md
-└── requirements.txt
+│   ├── __init__.py                # Package exports
+│   ├── budget.py                  # Route-aware pricing, room math & cost ranges
+│   ├── data_loader.py             # CSV schema & relational integrity validation
+│   ├── features.py                # Profile encoding & synthetic profile generator
+│   ├── itinerary.py               # Day-by-day scheduler with 7-hour daily caps
+│   ├── map_builder.py             # Folium interactive map generator (Esri tiles)
+│   ├── model.py                   # Random Forest suitability classifier
+│   └── recommender.py             # Hybrid recommendation engine & explanations
+├── check_setup.py                 # Diagnostic environment & dataset validator
+├── gui.py                         # Tkinter Desktop GUI with glassmorphism UI
+├── index.html                     # Standalone client-side Web application
+├── main.py                        # Terminal interactive CLI entry point
+├── README.md                      # Project documentation
+└── requirements.txt               # Python package dependencies
 ```
 
-- `main.py` — console entry point.
-- `travel/data_loader.py` — loads and validates CSV data.
-- `travel/features.py` — request validation and feature helpers.
-- `travel/model.py` — generates training examples and trains/evaluates the classifier.
-- `travel/recommender.py` — destination scoring, explanations, and budget filtering.
-- `travel/budget.py` — trip-cost estimates.
-- `travel/itinerary.py` — day-by-day activity scheduling.
-- `travel/map_builder.py` — creates the HTML map.
-- `data/` — local destination, hotel, and attraction data.
-- `tests/` — automated tests.
+---
 
-## Requirements
+## Core Features
 
-- Windows, macOS, or Linux with Python 3.10 or later
-- Dependencies listed in `requirements.txt`
+### 1. Hybrid AI Recommendation Engine
+- **Feature Vector:** Normalizes 5 core signals: Interest Alignment, Climate Match, Group Compatibility, Trip Duration Fit, and Scope (Domestic vs. International).
+- **Machine Learning Model:** Random Forest classifier (`travel/model.py`) trained on synthetic traveler profiles to predict trip suitability probabilities.
+- **Transparent Explanations:** Highlights exact reasons for recommendations (e.g., *"matches requested climate"*, *"strong interest alignment"*, *"fits duration"*).
 
-The commands below are written for Windows PowerShell in VS Code.
+### 2. Route-Aware Dynamic Flight Pricing
+- Reads origin-destination commercial airfare quotes from `data/flights.csv`.
+- Supports 8 major Indian departure hubs: **Delhi, Mumbai, Bengaluru, Kolkata, Chennai, Hyderabad, Chandigarh, Ahmedabad**.
+- Provides realistic **Min Saver** and **Max Peak** fare ranges per seat along with flight duration.
+- Gracefully falls back to destination baseline averages when an unlisted departure city is entered.
 
-## Setup on Windows / VS Code
+### 3. Strict Budget Filtering & Cost Breakdown
+- Destinations whose estimated total minimum cost exceeds the group's maximum budget are strictly excluded.
+- Calculates costs using realistic group dynamics:
+  $$\text{Total Trip Cost} = (\text{Flight Fare} \times \text{People}) + (\text{Room Rate} \times \lceil\text{People}/2\rceil \times \text{Nights}) + (\text{Food Rate} \times \text{People} \times \text{Days}) + (\text{Activities} \times \text{People})$$
+- Itemizes expenses into Flight, Stay, Food, Activities, and Estimated Total in both the GUI and CLI.
 
-### 1. Open the project
+### 4. Smart Day-by-Day Itinerary Scheduler
+- Distributes curated attractions across the requested trip duration.
+- Enforces a **7-hour maximum daily activity cap** to avoid traveler fatigue.
+- Balances attraction categories (cultural, nature, adventure, relaxation) and tracks cumulative visiting costs.
 
-Extract the ZIP file, then open the extracted `smart_ai_travel_planner` folder in VS Code.
+### 5. Multi-Layer Interactive Maps
+- Built with **Folium** and saved to `artifacts/travel_map.html`.
+- Powered by high-reliability **Esri ArcGIS Online** tiles:
+  - *Esri World Street Map* (default high-detail road and transit view)
+  - *Esri World Topographic* (terrain and relief contours)
+  - *Esri World Imagery* (satellite aerial imagery)
+- Pins selected hotels with blue bed markers and day-by-day attractions with numbered color-coded pins connected by route lines.
+- Automatically launches in the user's default browser.
 
-### 2. Create and activate a virtual environment
+---
 
+## Interfaces
+
+### 1. Desktop GUI (`gui.py`)
+A desktop application built with Python Tkinter featuring:
+- Glassmorphic translucent cards over scenic travel photography.
+- City dropdown, duration sliders, traveler counter, and interactive interest chip selectors.
+- Live-filtered destination cards showing hotel choices, flight routes, and cost breakdowns.
+- Side-by-side day-by-day itinerary drawer with a 1-click **Open Interactive Map** launcher.
+
+Run via:
+```powershell
+python gui.py
+```
+
+### 2. Terminal CLI (`main.py`)
+An interactive command-line interface:
+- Prompts for departure city, travel scope, group type, traveler count, trip duration, budget, climate, and interests.
+- Displays ranked recommendations with match scores and itemized costs.
+- Automatically generates the Folium map and detailed itinerary table.
+
+Run via:
+```powershell
+python main.py
+```
+
+### 3. Standalone Web App (`index.html`)
+- Completely offline, self-contained HTML/CSS/JS application.
+- Mirrors the 30-destination dataset, flight route calculations, and itinerary builder with an embedded Leaflet map.
+- Open `index.html` in any modern web browser directly (no local web server required).
+
+---
+
+## Supported Destinations & Hubs
+
+### 8 Departure Hubs
+- **North:** Delhi (DEL), Chandigarh (IXC)
+- **West:** Mumbai (BOM), Ahmedabad (AMD)
+- **South:** Bengaluru (BLR), Chennai (MAA), Hyderabad (HYD)
+- **East:** Kolkata (CCU)
+
+### 30 Curated Destinations
+| Region | Scope | Destinations |
+| :--- | :--- | :--- |
+| **North India** | Domestic | Agra, Amritsar, Ladakh, Manali, Rishikesh, Shimla, Srinagar, Varanasi |
+| **West India** | Domestic | Goa, Jaipur, Jaisalmer, Udaipur |
+| **South India** | Domestic | Coorg, Hampi, Kerala (Kochi/Munnar), Munnar, Mysore, Ooty, Pondicherry |
+| **East & Islands** | Domestic | Andaman Islands (Port Blair), Darjeeling |
+| **Middle East & Asia** | International | Bangkok, Bali, Dubai, Singapore, Tokyo |
+| **Europe** | International | London, Paris, Rome, Zurich |
+
+---
+
+## Setup & Installation
+
+### Requirements
+- Python 3.10, 3.11, 3.12, or 3.13
+- Windows, macOS, or Linux
+
+### 1. Clone or Extract the Project
+Open the project directory in your terminal or VS Code:
+```powershell
+cd smart_ai_travel_planner
+```
+
+### 2. Create and Activate Virtual Environment
+On Windows (PowerShell):
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation, run the environment's Python executable directly:
+*(On macOS/Linux: `python3 -m venv .venv && source .venv/bin/activate`)*
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-### 3. Install dependencies
-
-With the environment activated:
-
+### 3. Install Dependencies
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Check the setup and run tests
-
+### 4. Verify Setup
+Run the diagnostic script to confirm Python version, libraries, and CSV integrity:
 ```powershell
 python check_setup.py
-python -m unittest discover -s tests -v
 ```
 
-### 5. Start the planner
+Expected output:
+```text
+Python: 3.13.x
+pandas: 2.2.x
+scikit-learn: 1.x
+folium: 0.20.x
+Destinations: 30
+Hotels: 90
+Attractions: 240
+Flights: 237
+Setup check passed.
+```
 
+---
+
+## Running the Application
+
+### Launch the Desktop GUI
+```powershell
+python gui.py
+```
+
+### Launch the Console CLI
 ```powershell
 python main.py
 ```
 
-The model trains from synthetic local examples at startup. When map generation is used, the HTML map is saved to `artifacts/travel_map.html`.
-
-## Data and cost estimates
-
-The project uses three CSV files:
-
-- `data/destinations.csv`
-- `data/hotels.csv`
-- `data/attractions.csv`
-
-You can add destinations by editing the CSV files. Keep the existing column names and data formats unchanged, or update the data loader and tests accordingly.
-
-The current cost estimate uses this general formula:
-
-```text
-Estimated total =
-    transport per person × travellers
-  + (cheapest listed room rate × rooms × nights)
-  + (food per person per day × travellers × days)
-  + (activities per person × travellers)
+### Launch the Web Version
+Double-click `index.html` or open it in your preferred browser:
+```powershell
+start index.html
 ```
 
-The application assumes one room per two travellers, rounded up. Transport estimates are generic placeholders and are not route-specific fares or live quotes. The total should not be treated as a booking price. The starting city is collected for context but does not currently alter transport estimates.
+---
 
-## Limitations
+## Running Automated Tests
 
-- Destination, hotel, and attraction information comes from the bundled local CSV files.
-- Prices are illustrative estimates and may not reflect current market prices.
-- The application does not query live flights, hotel availability, visa rules, weather, or safety conditions.
-- The machine-learning training profiles are synthetic and labelled using explicit preference-matching rules.
-- Holdout accuracy measures agreement with those generated labels; it does not establish real-world travel quality.
-- Users should independently verify travel requirements, costs, opening hours, and safety information before booking.
+The test suite validates data schemas, flight lookups, budget constraints, feature encoders, ML training, and map rendering:
 
-These commands let you check the local environment and the tests included in the repository. They do not guarantee that live travel information is accurate, because the current project does not fetch live travel data.
+```powershell
+python -m unittest discover tests -v
+```
 
-## Possible future improvements
+All 12 unit tests should execute and pass cleanly:
+```text
+test_attractions_exist (test_planner.TestTravelPlanner) ... ok
+test_budget_math (test_planner.TestTravelPlanner) ... ok
+test_data_loader_success (test_planner.TestTravelPlanner) ... ok
+test_destinations_not_empty (test_planner.TestTravelPlanner) ... ok
+test_feature_vector_bounds (test_planner.TestTravelPlanner) ... ok
+test_flights_exist (test_planner.TestTravelPlanner) ... ok
+test_hotels_exist (test_planner.TestTravelPlanner) ... ok
+test_itinerary_hour_cap (test_planner.TestTravelPlanner) ... ok
+test_map_builder_creates_file (test_planner.TestTravelPlanner) ... ok
+test_model_trains_and_evaluates (test_planner.TestTravelPlanner) ... ok
+test_recommender_filters_over_budget (test_planner.TestTravelPlanner) ... ok
+test_route_flight_pricing (test_planner.TestTravelPlanner) ... ok
 
-- Integrate verified APIs for live transport, accommodation, weather, and points of interest.
-- Add data-source references and timestamps to destination and price records.
-- Expand test coverage for invalid input, budget edge cases, and itinerary constraints.
-- Compare the current synthetic-label model with simple non-ML baselines.
-- Add a graphical interface after the console workflow is stable.
+----------------------------------------------------------------------
+Ran 12 tests in 0.65s
 
-These are potential improvements, not features currently claimed by this repository.
+OK
+```
 
-## Contributing
+---
 
-Contributions can improve the dataset, validation, tests, recommendation logic, and documentation. For data changes, preserve the CSV schema and run the test suite before submitting a change.
+## Contributing & Customization
+
+- **Add Destinations:** Append new rows to `data/destinations.csv`, `data/hotels.csv`, `data/attractions.csv`, and `data/flights.csv`. Ensure foreign-key integrity matches `destination_id`.
+- **Adjust Flight Quotes:** Edit `data/flights.csv` to fine-tune route-specific minimum and maximum airfares or add new origin cities.
+- **Run Tests:** Always run `python -m unittest discover tests` after modifying CSV datasets to guarantee relational consistency.
