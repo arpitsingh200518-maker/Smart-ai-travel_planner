@@ -50,7 +50,7 @@ def collect_request():
         "climate": ask_choice("Preferred climate", ["Any", "Cold", "Mild", "Hot", "Dry", "Tropical"], "Any"),
         "group_type": ask_choice("Group type", ["Solo", "Couple", "Family", "Friends"], "Friends"),
         "interests": input("Interests, comma-separated (e.g. Nature,History,Food) [Nature]: ").strip() or "Nature",
-        "start_city": input(f"Flying from / Current Location [{default_origin}]: ").strip() or default_origin,
+        "start_city": input(f"Flying from (e.g. Delhi, Mumbai, Bengaluru, Kolkata, Chandigarh) [{default_origin}]: ").strip() or default_origin,
     })
 
 def print_costs(costs):

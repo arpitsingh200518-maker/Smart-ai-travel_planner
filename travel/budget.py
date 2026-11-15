@@ -2,7 +2,7 @@
 import math
 import urllib.parse
 
-def estimate_budget(destination, hotels, request):
+def estimate_budget(destination, hotels, request, flights=None):
     people = int(request["people"])
     days = int(request["days"])
     nights = max(0, days - 1)
@@ -16,11 +16,26 @@ def estimate_budget(destination, hotels, request):
         hotel_rate = float(cheapest["price_per_room_night"])
         hotel_name = str(cheapest["hotel_name"])
 
-    # Market flight prices loaded directly from destinations.csv
-    flight_min_pp = int(float(destination.get("flight_price_min", destination.get("transport_per_person", 3500))))
-    flight_max_pp = int(float(destination.get("flight_price_max", round(flight_min_pp * 2.5 / 100) * 100)))
-    flight_duration = str(destination.get("flight_duration", "2h 15m"))
     origin_city = str(request.get("start_city", "")).strip() or "Delhi"
+    dest_id = str(destination["destination_id"])
+
+    # Lookup real flight prices from flights dataset if available
+    flight_found = False
+    flight_airlines = ""
+    if flights is not None and not flights.empty:
+        match = flights[(flights["origin_city"].str.lower() == origin_city.lower()) & (flights["destination_id"] == dest_id)]
+        if not match.empty:
+            row = match.iloc[0]
+            flight_min_pp = int(row["flight_price_min"])
+            flight_max_pp = int(row["flight_price_max"])
+            flight_duration = str(row["flight_duration"])
+            flight_airlines = str(row.get("airline", ""))
+            flight_found = True
+
+    if not flight_found:
+        flight_min_pp = int(float(destination.get("flight_price_min", destination.get("transport_per_person", 3500))))
+        flight_max_pp = int(float(destination.get("flight_price_max", round(flight_min_pp * 2.5 / 100) * 100)))
+        flight_duration = str(destination.get("flight_duration", "2h 15m"))
 
     transport_min = flight_min_pp * people
     transport_max = flight_max_pp * people
@@ -34,9 +49,6 @@ def estimate_budget(destination, hotels, request):
     total_max = int(round(transport_max + accommodation + food + activities))
     total = total_min
 
-    query = f"Flights from {origin_city} to {destination['name']}"
-    search_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
-
     return {
         "transport": int(round(transport)),
         "transport_min": int(round(transport_min)),
@@ -49,7 +61,7 @@ def estimate_budget(destination, hotels, request):
         "flight_origin": origin_city,
         "flight_distance_km": 0,
         "flight_duration": flight_duration,
-        "flight_search_url": search_url,
+        "flight_airlines": flight_airlines,
         "accommodation": int(round(accommodation)),
         "food": int(round(food)),
         "activities": int(round(activities)),

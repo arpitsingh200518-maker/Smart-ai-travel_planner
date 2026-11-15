@@ -11,7 +11,7 @@ def recommend_destinations(frames, request, model, limit=5):
         destination = row.to_dict()
         if request["scope"] != "either" and destination["scope"] != request["scope"]:
             continue
-        costs = estimate_budget(destination, frames["hotels"], request)
+        costs = estimate_budget(destination, frames["hotels"], request, frames.get("flights"))
         if costs["total"] > request["budget"]:
             continue  # Strict rule: never recommend an over-budget destination.
         vector = feature_vector(destination, request)

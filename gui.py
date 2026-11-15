@@ -458,10 +458,10 @@ class TravelPlannerApp(tk.Tk):
         self.interests_frame, self.interests_entry = self._create_canvas_entry(self.interests_var)
         self._win_interests = self.planner_canvas.create_window(0, 0, window=self.interests_frame, anchor="nw")
 
-        default_origin = "Delhi"
-        self.start_var = tk.StringVar(value=default_origin)
-        self.start_frame, self.start_entry = self._create_canvas_entry(self.start_var)
-        self._win_start = self.planner_canvas.create_window(0, 0, window=self.start_frame, anchor="nw")
+        self.start_var = tk.StringVar(value="Delhi")
+        self.start_cb = ttk.Combobox(self.planner_canvas, textvariable=self.start_var,
+                                     values=["Delhi", "Mumbai", "Bengaluru", "Kolkata", "Chennai", "Hyderabad", "Chandigarh", "Ahmedabad"])
+        self._win_start = self.planner_canvas.create_window(0, 0, window=self.start_cb, anchor="nw")
 
         # Disclaimer & Find Destinations Button
         self._t_disclaimer = self.planner_canvas.create_text(
@@ -1268,7 +1268,7 @@ class TravelPlannerApp(tk.Tk):
             "domestic and international trips using local\n"
             "datasets, preference matching, budget constraints,\n"
             "itinerary generation and interactive maps.\n\n"
-            "30 destinations · 90 hotels · 180 attractions\n\n"
+            "30 destinations · 90 hotels · 180 attractions · 230+ flight routes\n\n"
             "Prices are illustrative estimates.\n"
             "Verify all travel details independently.")
 

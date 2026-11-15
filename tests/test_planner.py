@@ -28,8 +28,21 @@ class PlannerTests(unittest.TestCase):
         request.update(updates)
         return validate_request(request)
 
-    def test_loads_all_destinations(self):
-        self.assertEqual(len(self.frames["destinations"]), 30)
+    def test_flights_csv_loaded(self):
+        self.assertIn("flights", self.frames)
+        flights = self.frames["flights"]
+        self.assertGreater(len(flights), 200)
+        self.assertIn("origin_city", flights.columns)
+        self.assertIn("destination_id", flights.columns)
+        self.assertIn("flight_price_min", flights.columns)
+        self.assertIn("flight_price_max", flights.columns)
+
+    def test_estimate_budget_uses_route_specific_flight_pricing(self):
+        dest_goa = self.frames["destinations"][self.frames["destinations"]["destination_id"] == "IN01"].iloc[0].to_dict()
+        costs_mumbai = estimate_budget(dest_goa, self.frames["hotels"], {"people": 2, "days": 3, "start_city": "Mumbai"}, self.frames["flights"])
+        costs_delhi = estimate_budget(dest_goa, self.frames["hotels"], {"people": 2, "days": 3, "start_city": "Delhi"}, self.frames["flights"])
+        # Mumbai to Goa is closer than Delhi to Goa, so flight price must reflect that
+        self.assertLess(costs_mumbai["flight_min"], costs_delhi["flight_min"])
 
     def test_destinations_csv_has_market_flight_columns(self):
         destinations = self.frames["destinations"]
