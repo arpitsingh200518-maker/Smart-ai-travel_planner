@@ -1068,9 +1068,6 @@ class TravelPlannerApp(tk.Tk):
                 costs_inner.columnconfigure(col_idx, weight=1)
 
             flight_origin = c.get("flight_origin") or request.get("start_city") or "Current Location"
-            flight_dur = c.get("flight_duration", "")
-            flight_dist = c.get("flight_distance_km", 0)
-            flight_pp_range = c.get("flight_range_str", "")
             transport_range = c.get("transport_range_str") or money(c["transport"])
             total_range = c.get("total_range_str") or money(c["total"])
 
@@ -1092,18 +1089,12 @@ class TravelPlannerApp(tk.Tk):
             tk.Label(costs_inner, text=total_range, bg=GLASS_BG, fg=color,
                      font=("Segoe UI", 11, "bold")).grid(row=1, column=4, sticky="e", padx=4)
 
-            # Row 4: Hotel info + Flight fare range badge + Select button
+            # Row 4: Hotel info + Select button
             row4 = tk.Frame(content, bg=GLASS_BG)
             row4.pack(fill="x", pady=(10, 0))
 
             tk.Label(row4, text=f"🏨 {c['hotel_name']}", bg=GLASS_BG,
                      fg=TEXT_MUTED, font=self.small_font).pack(side="left")
-
-            if flight_pp_range:
-                fare_txt = f"✈️ Flight: {flight_pp_range}/seat ({flight_dur})" if flight_dur else f"✈️ Flight: {flight_pp_range}/seat"
-                fare_lbl = tk.Label(row4, text=fare_txt, bg=GLASS_BG,
-                                    fg=ACCENT_CYAN, font=("Segoe UI", 8, "bold"))
-                fare_lbl.pack(side="left", padx=(14, 0))
 
             select_btn = tk.Button(
                 row4, text="  Select → Itinerary & Map  ", font=("Segoe UI", 10, "bold"),
