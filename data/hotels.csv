@@ -1,61 +1,61 @@
 destination_id,hotel_name,price_per_room_night,category
-IN01,Goa Budget Stay,2028,budget
-IN01,Goa Comfort Hotel,2600,standard
-IN01,Goa Premium Stay,3770,premium
-IN02,Manali Budget Stay,1716,budget
-IN02,Manali Comfort Hotel,2200,standard
-IN02,Manali Premium Stay,3190,premium
-IN03,Jaipur Budget Stay,1404,budget
-IN03,Jaipur Comfort Hotel,1800,standard
-IN03,Jaipur Premium Stay,2610,premium
-IN04,Srinagar Budget Stay,2184,budget
-IN04,Srinagar Comfort Hotel,2800,standard
-IN04,Srinagar Premium Stay,4060,premium
-IN05,Kerala Backwaters Budget Stay,2340,budget
-IN05,Kerala Backwaters Comfort Hotel,3000,standard
-IN05,Kerala Backwaters Premium Stay,4350,premium
-IN06,Rishikesh Budget Stay,1248,budget
-IN06,Rishikesh Comfort Hotel,1600,standard
-IN06,Rishikesh Premium Stay,2320,premium
-IN07,Varanasi Budget Stay,1092,budget
-IN07,Varanasi Comfort Hotel,1400,standard
-IN07,Varanasi Premium Stay,2030,premium
-IN08,Udaipur Budget Stay,1638,budget
-IN08,Udaipur Comfort Hotel,2100,standard
-IN08,Udaipur Premium Stay,3045,premium
-IN09,Darjeeling Budget Stay,1638,budget
-IN09,Darjeeling Comfort Hotel,2100,standard
-IN09,Darjeeling Premium Stay,3045,premium
-IN10,Andaman Islands Budget Stay,2496,budget
-IN10,Andaman Islands Comfort Hotel,3200,standard
-IN10,Andaman Islands Premium Stay,4640,premium
-IN11,Delhi Budget Stay,1482,budget
-IN11,Delhi Comfort Hotel,1900,standard
-IN11,Delhi Premium Stay,2755,premium
-IN12,Mysuru Budget Stay,1326,budget
-IN12,Mysuru Comfort Hotel,1700,standard
-IN12,Mysuru Premium Stay,2465,premium
-IN13,Leh Budget Stay,2028,budget
-IN13,Leh Comfort Hotel,2600,standard
-IN13,Leh Premium Stay,3770,premium
-IN14,Mumbai Budget Stay,2184,budget
-IN14,Mumbai Comfort Hotel,2800,standard
-IN14,Mumbai Premium Stay,4060,premium
-IN15,Kaziranga Budget Stay,1872,budget
-IN15,Kaziranga Comfort Hotel,2400,standard
-IN15,Kaziranga Premium Stay,3480,premium
-INT01,Bangkok Budget Stay,2340,budget
-INT01,Bangkok Comfort Hotel,3000,standard
-INT01,Bangkok Premium Stay,4350,premium
-INT02,Singapore Budget Stay,5070,budget
-INT02,Singapore Comfort Hotel,6500,standard
-INT02,Singapore Premium Stay,9425,premium
-INT03,Dubai Budget Stay,4290,budget
-INT03,Dubai Comfort Hotel,5500,standard
-INT03,Dubai Premium Stay,7975,premium
-INT04,Kathmandu Budget Stay,1716,budget
-INT04,Kathmandu Comfort Hotel,2200,standard
-INT04,Kathmandu Premium Stay,3190,premium
-INT05,Kuala Lumpur Budget Stay,2496,budget
-INT05,Kuala Lumpur Comfort Hotel,3200,standard
-INT05,Kuala Lumpur Premium Stay,4640,premium
+IN01,Goa Budget Stay,2200,budget
+IN01,Goa Comfort Hotel,3800,standard
+IN01,Goa Premium Stay,7500,premium
+IN02,Manali Budget Stay,1800,budget
+IN02,Manali Comfort Hotel,3200,standard
+IN02,Manali Premium Stay,6500,premium
+IN03,Jaipur Budget Stay,1600,budget
+IN03,Jaipur Comfort Hotel,2800,standard
+IN03,Jaipur Premium Stay,5800,premium
+IN04,Srinagar Budget Stay,2400,budget
+IN04,Srinagar Comfort Hotel,4200,standard
+IN04,Srinagar Premium Stay,8500,premium
+IN05,Kerala Backwaters Budget Stay,2600,budget
+IN05,Kerala Backwaters Comfort Hotel,4500,standard
+IN05,Kerala Backwaters Premium Stay,9000,premium
+IN06,Rishikesh Budget Stay,1500,budget
+IN06,Rishikesh Comfort Hotel,2800,standard
+IN06,Rishikesh Premium Stay,5500,premium
+IN07,Varanasi Budget Stay,1400,budget
+IN07,Varanasi Comfort Hotel,2400,standard
+IN07,Varanasi Premium Stay,5000,premium
+IN08,Udaipur Budget Stay,2000,budget
+IN08,Udaipur Comfort Hotel,3800,standard
+IN08,Udaipur Premium Stay,8000,premium
+IN09,Darjeeling Budget Stay,1800,budget
+IN09,Darjeeling Comfort Hotel,3200,standard
+IN09,Darjeeling Premium Stay,6500,premium
+IN10,Andaman Islands Budget Stay,3200,budget
+IN10,Andaman Islands Comfort Hotel,5500,standard
+IN10,Andaman Islands Premium Stay,11000,premium
+IN11,Delhi Budget Stay,2000,budget
+IN11,Delhi Comfort Hotel,3600,standard
+IN11,Delhi Premium Stay,7500,premium
+IN12,Mysuru Budget Stay,1600,budget
+IN12,Mysuru Comfort Hotel,2800,standard
+IN12,Mysuru Premium Stay,5200,premium
+IN13,Leh Budget Stay,2500,budget
+IN13,Leh Comfort Hotel,4500,standard
+IN13,Leh Premium Stay,8500,premium
+IN14,Mumbai Budget Stay,3200,budget
+IN14,Mumbai Comfort Hotel,5800,standard
+IN14,Mumbai Premium Stay,12500,premium
+IN15,Kaziranga Budget Stay,2400,budget
+IN15,Kaziranga Comfort Hotel,4000,standard
+IN15,Kaziranga Premium Stay,7800,premium
+INT01,Bangkok Budget Stay,2800,budget
+INT01,Bangkok Comfort Hotel,4800,standard
+INT01,Bangkok Premium Stay,10500,premium
+INT02,Singapore Budget Stay,7500,budget
+INT02,Singapore Comfort Hotel,13500,standard
+INT02,Singapore Premium Stay,28000,premium
+INT03,Dubai Budget Stay,6500,budget
+INT03,Dubai Comfort Hotel,11500,standard
+INT03,Dubai Premium Stay,24000,premium
+INT04,Kathmandu Budget Stay,2000,budget
+INT04,Kathmandu Comfort Hotel,3500,standard
+INT04,Kathmandu Premium Stay,7200,premium
+INT05,Kuala Lumpur Budget Stay,3000,budget
+INT05,Kuala Lumpur Comfort Hotel,5200,standard
+INT05,Kuala Lumpur Premium Stay,11000,premium

@@ -1,6 +1,6 @@
-"""Dynamic trip-cost estimation with live flight pricing from user origin to destination."""
+"""Dynamic trip-cost estimation using local CSV market prices."""
 import math
-from .flight_api import get_live_flight_quote
+import urllib.parse
 
 def estimate_budget(destination, hotels, request):
     people = int(request["people"])
@@ -16,22 +16,26 @@ def estimate_budget(destination, hotels, request):
         hotel_rate = float(cheapest["price_per_room_night"])
         hotel_name = str(cheapest["hotel_name"])
 
-    # Live Flight Pricing from user's current location or departure city
-    origin = request.get("start_city", "")
-    flight_quote = get_live_flight_quote(origin, destination)
-    flight_min_pp = flight_quote["price_min"]
-    flight_max_pp = flight_quote["price_max"]
+    # Market flight prices loaded directly from destinations.csv
+    flight_min_pp = int(float(destination.get("flight_price_min", destination.get("transport_per_person", 3500))))
+    flight_max_pp = int(float(destination.get("flight_price_max", round(flight_min_pp * 2.5 / 100) * 100)))
+    flight_duration = str(destination.get("flight_duration", "2h 15m"))
+    origin_city = str(request.get("start_city", "")).strip() or "Delhi"
+
     transport_min = flight_min_pp * people
     transport_max = flight_max_pp * people
-    transport = transport_min  # Keep baseline as cheapest saver fare
+    transport = transport_min
 
     accommodation = hotel_rate * rooms * nights
     food = float(destination["food_per_person_day"]) * people * days
     activities = float(destination["activities_per_person"]) * people
-    
+
     total_min = int(round(transport_min + accommodation + food + activities))
     total_max = int(round(transport_max + accommodation + food + activities))
     total = total_min
+
+    query = f"Flights from {origin_city} to {destination['name']}"
+    search_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
 
     return {
         "transport": int(round(transport)),
@@ -42,10 +46,10 @@ def estimate_budget(destination, hotels, request):
         "flight_max": flight_max_pp,
         "flight_per_person": flight_min_pp,
         "flight_range_str": f"₹{flight_min_pp:,} - ₹{flight_max_pp:,}",
-        "flight_origin": flight_quote["origin_city"],
-        "flight_distance_km": flight_quote["distance_km"],
-        "flight_duration": flight_quote["duration_str"],
-        "flight_search_url": flight_quote["search_url"],
+        "flight_origin": origin_city,
+        "flight_distance_km": 0,
+        "flight_duration": flight_duration,
+        "flight_search_url": search_url,
         "accommodation": int(round(accommodation)),
         "food": int(round(food)),
         "activities": int(round(activities)),

@@ -1,15 +1,12 @@
 """
-Live Flight Pricing & Origin Geolocation API.
-Dynamically calculates live flight ticket prices from the user's current location
-or specified departure city to any destination in the dataset.
-No hardcoded flight CSV required.
+Flight & Location Module — 100% Local / Offline (No External APIs).
+Provides offline origin resolution, flight pricing from CSV dataset,
+and Google Flights deep-links without network dependencies.
 """
 import math
-import json
 import urllib.parse
-import urllib.request
 from collections import namedtuple
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple
 
 # Named tuple for flight fares supporting tuple unpacking and named attributes
 class FlightFare(namedtuple("FlightFare", ["price_min", "price_max", "duration_str"])):
@@ -17,11 +14,8 @@ class FlightFare(namedtuple("FlightFare", ["price_min", "price_max", "duration_s
     def range_str(self) -> str:
         return f"₹{self.price_min:,} - ₹{self.price_max:,}"
 
-# In-memory caches to ensure fast responses and offline tolerance
-_LOCATION_CACHE: Dict[str, Tuple[float, float, str, str]] = {}
-_CURRENT_USER_LOCATION: Optional[Dict[str, Any]] = None
 
-# Pre-cached airport/city coordinates for instant lookups
+# Pre-cached airport/city coordinates for instant offline lookups
 COMMON_HUBS = {
     "delhi": (28.6139, 77.2090, "Delhi", "India"),
     "new delhi": (28.6139, 77.2090, "New Delhi", "India"),
@@ -43,6 +37,7 @@ COMMON_HUBS = {
     "varanasi": (25.3176, 82.9739, "Varanasi", "India"),
     "patna": (25.5941, 85.1376, "Patna", "India"),
     "chandigarh": (30.7333, 76.7794, "Chandigarh", "India"),
+    "mohali": (30.6740, 76.7249, "Mohali", "India"),
     "kochi": (9.9312, 76.2673, "Kochi", "India"),
     "cochin": (9.9312, 76.2673, "Kochi", "India"),
     "goa": (15.2993, 74.1240, "Goa", "India"),
@@ -64,83 +59,27 @@ DEFAULT_ORIGIN = {"city": "Delhi", "country": "India", "latitude": 28.6139, "lon
 
 
 def get_current_location() -> Dict[str, Any]:
-    """
-    Detect the user's current city and coordinates using IP geolocation API.
-    Falls back gracefully to Delhi, India if offline or timeout occurs.
-    """
-    global _CURRENT_USER_LOCATION
-    if _CURRENT_USER_LOCATION is not None:
-        return _CURRENT_USER_LOCATION
-
-    try:
-        url = "http://ip-api.com/json/?fields=status,country,city,lat,lon"
-        req = urllib.request.Request(url, headers={"User-Agent": "SmartAITravelPlanner/2.0"})
-        with urllib.request.urlopen(req, timeout=2.5) as response:
-            data = json.loads(response.read().decode("utf-8"))
-            if data.get("status") == "success" and data.get("city"):
-                city_name = data.get("city")
-                # Normalize city names like 'Tighri' to Delhi if in NCR
-                if city_name.lower() in ("tighri", "noida", "gurgaon", "faridabad", "ghaziabad"):
-                    city_name = "Delhi"
-                _CURRENT_USER_LOCATION = {
-                    "city": city_name,
-                    "country": data.get("country", "India"),
-                    "latitude": float(data.get("lat", 28.6139)),
-                    "longitude": float(data.get("lon", 77.2090)),
-                }
-                return _CURRENT_USER_LOCATION
-    except Exception:
-        pass
-
-    _CURRENT_USER_LOCATION = DEFAULT_ORIGIN.copy()
-    return _CURRENT_USER_LOCATION
+    """Offline default location provider. Zero external API calls."""
+    return DEFAULT_ORIGIN.copy()
 
 
 def resolve_location(place_name: str) -> Tuple[float, float, str, str]:
-    """
-    Resolve a city or airport location string to (latitude, longitude, formatted_city, country).
-    Uses common hubs lookup first, then live Open-Meteo Geocoding API.
-    """
-    cleaned = place_name.strip()
-    if not cleaned or cleaned.lower() in ("anywhere", "not specified", "current location", "my location", "here"):
-        curr = get_current_location()
-        return curr["latitude"], curr["longitude"], curr["city"], curr["country"]
+    """Offline city resolution from local dictionary. Zero external API calls."""
+    cleaned = (place_name or "").strip()
+    if not cleaned or cleaned.lower() in ("anywhere", "not specified", "current location", "my location", "here", "default"):
+        return DEFAULT_ORIGIN["latitude"], DEFAULT_ORIGIN["longitude"], DEFAULT_ORIGIN["city"], DEFAULT_ORIGIN["country"]
 
     key = cleaned.lower()
     if key in COMMON_HUBS:
         return COMMON_HUBS[key]
 
-    if key in _LOCATION_CACHE:
-        return _LOCATION_CACHE[key]
-
-    # Live Geocoding via Open-Meteo API
-    try:
-        quoted = urllib.parse.quote(cleaned)
-        url = f"https://geocoding-api.open-meteo.com/v1/search?name={quoted}&count=1"
-        req = urllib.request.Request(url, headers={"User-Agent": "SmartAITravelPlanner/2.0"})
-        with urllib.request.urlopen(req, timeout=3.0) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            results = data.get("results", [])
-            if results:
-                top = results[0]
-                lat = float(top.get("latitude", 28.6139))
-                lon = float(top.get("longitude", 77.2090))
-                c_name = top.get("name", cleaned.title())
-                country = top.get("country", "")
-                result = (lat, lon, c_name, country)
-                _LOCATION_CACHE[key] = result
-                return result
-    except Exception:
-        pass
-
-    # Fallback to current location
-    curr = get_current_location()
-    return curr["latitude"], curr["longitude"], cleaned.title(), curr["country"]
+    # Offline fallback to default origin with user's requested place name
+    return DEFAULT_ORIGIN["latitude"], DEFAULT_ORIGIN["longitude"], cleaned.title(), DEFAULT_ORIGIN["country"]
 
 
 def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate the great-circle distance between two points on Earth in kilometers."""
-    R = 6371.0  # Earth radius in kilometers
+    """Calculate great-circle distance between two coordinates in km."""
+    R = 6371.0
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
@@ -149,15 +88,8 @@ def haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) ->
 
 
 def calculate_flight_fare(distance_km: float, is_international: bool = False) -> FlightFare:
-    """
-    Live flight pricing engine:
-    Computes realistic commercial flight ticket price range (cheapest saver fare to maximum peak/flex fare in INR)
-    based on distance, route classification (domestic vs international), fuel surcharge, and airport fees.
-    Returns FlightFare(price_min, price_max, duration_str).
-    """
+    """Offline aviation formula for flight fare ranges based on distance."""
     dist = max(30.0, distance_km)
-
-    # Flight duration: cruise speed ~750 km/h + 35 min taxi/takeoff/climb
     total_hours = (dist / 750.0) + 0.6
     hrs = int(total_hours)
     mins = int(round((total_hours - hrs) * 60 / 5) * 5)
@@ -167,63 +99,46 @@ def calculate_flight_fare(distance_km: float, is_international: bool = False) ->
     duration_str = f"{hrs}h {mins}m" if mins > 0 else f"{hrs}h"
 
     if not is_international:
-        # Domestic Flight Pricing
         if dist < 450:
-            # Short hop (e.g. Delhi-Jaipur, Mumbai-Goa)
             base_price = 2200 + (dist * 2.1)
             min_factor, max_factor = 0.78, 2.35
         elif dist < 1200:
-            # Medium haul (e.g. Delhi-Mumbai, Delhi-Varanasi, Bangalore-Goa)
             base_price = 3200 + (dist * 1.85)
             min_factor, max_factor = 0.70, 2.25
         elif dist < 2200:
-            # Long domestic (e.g. Delhi-Kerala, Kolkata-Bangalore, Delhi-Goa)
             base_price = 4200 + (dist * 1.65)
             min_factor, max_factor = 0.68, 2.05
         else:
-            # Extended domestic (e.g. Delhi-Andaman, Leh-Kochi)
             base_price = 5500 + (dist * 1.55)
             min_factor, max_factor = 0.72, 2.00
     else:
-        # International Flight Pricing (includes international departure tax & long range)
         if dist < 2500:
-            # Regional International (e.g. India to Kathmandu, Bangkok, Dubai)
             base_price = 7500 + (dist * 2.5)
             min_factor, max_factor = 0.75, 2.15
         elif dist < 5000:
-            # Mid-haul International (e.g. India to Singapore, KL, Central Asia)
             base_price = 11000 + (dist * 2.2)
             min_factor, max_factor = 0.75, 2.10
         elif dist < 8000:
-            # Long-haul International (e.g. India to Europe, Japan)
             base_price = 24000 + (dist * 2.6)
             min_factor, max_factor = 0.78, 2.15
         else:
-            # Ultra long-haul (e.g. India to USA, Australia)
             base_price = 38000 + (dist * 2.8)
             min_factor, max_factor = 0.80, 2.10
 
-    # Calculate cheapest (saver) and maximum (peak/flex) ticket fares
     min_price = int(round((base_price * min_factor) / 100.0) * 100)
     max_price = int(round((base_price * max_factor) / 100.0) * 100)
-
-    # Ensure baseline boundaries
     min_price = max(1800, min_price)
     max_price = max(min_price + 1500, max_price)
-
     return FlightFare(min_price, max_price, duration_str)
 
 
 def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Main live flight quote entrypoint.
-    Takes user-entered location or defaults to detected current location,
-    resolves coordinates, and calculates live flight ticket price range to the destination.
+    Get flight quote directly from CSV dataset values with offline distance calculation.
+    Zero external APIs called.
     """
-    # 1. Resolve Origin
     orig_lat, orig_lon, origin_city, origin_country = resolve_location(origin_input)
 
-    # 2. Resolve Destination Coordinates
     try:
         dest_lat = float(destination.get("latitude", 0.0))
         dest_lon = float(destination.get("longitude", 0.0))
@@ -233,20 +148,23 @@ def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dic
     dest_name = str(destination.get("name", "Destination"))
     dest_country = str(destination.get("country", "India"))
     scope = str(destination.get("scope", "domestic")).lower()
-
-    # Determine if international
     is_international = (scope == "international") or (origin_country and dest_country and origin_country.lower() != dest_country.lower())
 
-    # 3. Calculate Distance
     dist_km = haversine_distance_km(orig_lat, orig_lon, dest_lat, dest_lon)
 
-    # 4. Calculate Live Flight Ticket Price Range & Duration
-    fare = calculate_flight_fare(dist_km, is_international)
-    price_min = fare.price_min
-    price_max = fare.price_max
-    duration_str = fare.duration_str
+    # Read market price directly from destination CSV dataset
+    if "flight_price_min" in destination and "flight_price_max" in destination:
+        price_min = int(float(destination["flight_price_min"]))
+        price_max = int(float(destination["flight_price_max"]))
+        duration_str = str(destination.get("flight_duration", "2h 15m"))
+    elif "transport_per_person" in destination:
+        price_min = int(float(destination["transport_per_person"]))
+        price_max = int(round(price_min * 2.4 / 100) * 100)
+        duration_str = str(destination.get("flight_duration", "2h 15m"))
+    else:
+        fare = calculate_flight_fare(dist_km, is_international)
+        price_min, price_max, duration_str = fare.price_min, fare.price_max, fare.duration_str
 
-    # 5. Live Deep Link to Google Flights for instant real booking
     query = f"Flights from {origin_city} to {dest_name}"
     search_url = f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
 
@@ -254,7 +172,7 @@ def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dic
         "price_min": price_min,
         "price_max": price_max,
         "price_range_str": f"₹{price_min:,} - ₹{price_max:,}",
-        "price_per_person": price_min,  # Baseline saver fare for budget filtering
+        "price_per_person": price_min,
         "origin_city": origin_city,
         "origin_country": origin_country,
         "origin_coordinates": (orig_lat, orig_lon),
@@ -265,4 +183,3 @@ def get_live_flight_quote(origin_input: str, destination: Dict[str, Any]) -> Dic
         "is_international": is_international,
         "search_url": search_url,
     }
-

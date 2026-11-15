@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 
 REQUIRED = {
-    "destinations.csv": {"destination_id", "name", "country", "scope", "climate", "interests", "group_types", "min_days", "max_days", "hotel_price_per_room_night", "food_per_person_day", "activities_per_person", "latitude", "longitude", "description"},
+    "destinations.csv": {"destination_id", "name", "country", "scope", "climate", "interests", "group_types", "min_days", "max_days", "transport_per_person", "hotel_price_per_room_night", "food_per_person_day", "activities_per_person", "latitude", "longitude", "description"},
     "hotels.csv": {"destination_id", "hotel_name", "price_per_room_night", "category"},
     "attractions.csv": {"destination_id", "attraction_name", "category", "estimated_cost_per_person", "duration_hours", "latitude", "longitude"},
 }
