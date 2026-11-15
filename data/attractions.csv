@@ -119,3 +119,64 @@ INT05,Kuala Lumpur Market Visit,shopping,200,1.5,3.114,101.7119
 INT05,Kuala Lumpur Architectural Landmark,architecture,300,2.0,3.139,101.6619
 INT05,Kuala Lumpur Museum Visit,history,250,2.0,3.164,101.7119
 INT05,Kuala Lumpur Local Market,shopping,200,1.5,3.114,101.6619
+
+IN16,Ooty Botanical Gardens,nature,100,2.5,11.4190,76.7110
+IN16,Doddabetta Peak Viewpoint,nature,50,2.0,11.4010,76.7370
+IN16,Nilgiri Mountain Toy Train,adventure,300,3.0,11.4060,76.7030
+IN16,Ooty Lake & Boating,nature,250,2.0,11.4070,76.6870
+IN16,Tea Museum & Chocolate Factory,food,200,1.5,11.4140,76.7260
+IN16,Rose Garden Walk,nature,80,1.5,11.4030,76.7150
+IN17,The Ridge & Mall Road,culture,0,2.5,31.1044,77.1743
+IN17,Jakhoo Temple & Ropeway,nature,500,2.0,31.1011,77.1852
+IN17,Viceregal Lodge,history,200,2.0,31.1030,77.1415
+IN17,Kufri Snow Adventure Park,adventure,600,3.5,31.0979,77.2679
+IN17,Tara Devi Temple Forest Trail,nature,100,2.5,31.0664,77.1332
+IN17,Lakkar Bazaar Handicraft Walk,shopping,150,1.5,31.1065,77.1760
+IN18,Golden Temple (Harmandir Sahib),culture,0,3.0,31.6200,74.8765
+IN18,Jallianwala Bagh Memorial,history,0,1.5,31.6206,74.8797
+IN18,Wagah Border Beating Retreat,history,0,3.5,31.6048,74.5731
+IN18,Partition Museum,culture,150,2.0,31.6247,74.8792
+IN18,Amritsari Kulcha Food Trail,food,400,2.0,31.6320,74.8730
+IN18,Gobindgarh Fort Light & Sound,history,300,2.5,31.6280,74.8620
+IN19,Taj Mahal Sunrise Visit,architecture,250,3.0,27.1751,78.0421
+IN19,Agra Fort,history,200,2.5,27.1795,78.0211
+IN19,Mehtab Bagh Sunset View,nature,100,1.5,27.1800,78.0425
+IN19,Fatehpur Sikri Royal Complex,history,300,3.5,27.0945,77.6679
+IN19,Mughal Street Food Trail,food,450,2.0,27.1720,78.0150
+IN19,Itmad-ud-Daulah Tomb,architecture,150,1.5,27.1929,78.0310
+IN20,Abbey Falls Nature Trail,nature,100,2.0,12.4540,75.7190
+IN20,Raja Seat Sunset Garden,nature,50,1.5,12.4180,75.7370
+IN20,Dubare Elephant Camp & Rafting,adventure,700,3.0,12.3680,75.9050
+IN20,Namdroling Monastery (Golden Temple),culture,0,2.0,12.4530,75.9670
+IN20,Coffee Plantation & Spice Tour,nature,350,2.5,12.4350,75.7480
+IN20,Mandalpatti 4x4 Jeep Safari,adventure,800,3.5,12.5180,75.7020
+IN21,White Town French Quarter Walk,architecture,0,2.5,11.9325,79.8350
+IN21,Promenade Beachfront Sunset,nature,0,2.0,11.9340,79.8360
+IN21,Auroville & Matrimandir,culture,100,3.5,12.0070,79.8105
+IN21,Paradise Beach Ferry & Water Sports,beach,400,3.0,11.8720,79.8180
+IN21,French Cafe & Bakery Trail,food,550,2.0,11.9330,79.8320
+IN21,Sri Aurobindo Ashram,culture,0,1.5,11.9360,79.8340
+INT06,Ubud Tegallalang Rice Terrace,nature,400,2.5,-8.4340,115.2790
+INT06,Tanah Lot Sea Temple,culture,500,2.5,-8.6210,115.0868
+INT06,Uluwatu Sunset Temple & Kecak Dance,culture,800,3.0,-8.8290,115.0849
+INT06,Seminyak Beach & Sunset Club,beach,600,2.5,-8.6913,115.1578
+INT06,Sacred Monkey Forest Sanctuary,nature,450,2.0,-8.5190,115.2600
+INT06,Mount Batur Sunrise Trek,adventure,1500,4.5,-8.2420,115.3750
+INT07,Coral Reef Snorkeling Safari,nature,1800,3.0,4.1850,73.5200
+INT07,Sandbank Picnic & Lagoon Swim,nature,1200,3.5,4.2100,73.5400
+INT07,Sunset Dolphin Cruise,adventure,1500,2.5,4.1600,73.5000
+INT07,Scuba Diving Manta Ray Point,adventure,3500,4.0,4.2300,73.5600
+INT07,Local Island Culture Tour,culture,500,2.0,4.1750,73.5120
+INT07,Water Sports & Jet Ski Experience,adventure,2000,2.0,4.1900,73.5300
+INT08,Senso-ji Ancient Temple & Asakusa,history,0,2.5,35.7148,139.7967
+INT08,Shibuya Crossing & Hachiko Plaza,culture,0,2.0,35.6595,139.7005
+INT08,Shinjuku Gyoen National Garden,nature,300,2.5,35.6852,139.7101
+INT08,Akihabara Tech & Anime District,shopping,500,3.0,35.6984,139.7731
+INT08,Tsukiji Outer Food Market Tour,food,1200,2.5,35.6655,139.7708
+INT08,teamLab Planets Digital Art,culture,2200,2.5,35.6491,139.7898
+INT09,Eiffel Tower Summit & Trocadero,architecture,1800,3.0,48.8584,2.2945
+INT09,Louvre Museum Masterpieces Tour,history,1600,3.5,48.8606,2.3376
+INT09,Seine River Cruise at Sunset,nature,1100,2.0,48.8570,2.3400
+INT09,Montmartre & Sacre-Coeur Basilica,culture,0,2.5,48.8867,2.3431
+INT09,Champs-Elysees & Arc de Triomphe,architecture,900,2.0,48.8738,2.2950
+INT09,Latin Quarter Boulangerie & Bistro Trail,food,1500,2.0,48.8500,2.3450

@@ -44,6 +44,24 @@ IN14,Mumbai Premium Stay,12500,premium
 IN15,Kaziranga Budget Stay,2400,budget
 IN15,Kaziranga Comfort Hotel,4000,standard
 IN15,Kaziranga Premium Stay,7800,premium
+IN16,Ooty Budget Stay,1800,budget
+IN16,Ooty Comfort Hotel,3200,standard
+IN16,Ooty Premium Stay,6500,premium
+IN17,Shimla Budget Stay,1900,budget
+IN17,Shimla Comfort Hotel,3400,standard
+IN17,Shimla Premium Stay,7000,premium
+IN18,Amritsar Budget Stay,1500,budget
+IN18,Amritsar Comfort Hotel,2600,standard
+IN18,Amritsar Premium Stay,5500,premium
+IN19,Agra Budget Stay,1600,budget
+IN19,Agra Comfort Hotel,2800,standard
+IN19,Agra Premium Stay,6000,premium
+IN20,Coorg Budget Stay,2000,budget
+IN20,Coorg Comfort Hotel,3500,standard
+IN20,Coorg Premium Stay,7500,premium
+IN21,Pondicherry Budget Stay,1800,budget
+IN21,Pondicherry Comfort Hotel,3200,standard
+IN21,Pondicherry Premium Stay,6800,premium
 INT01,Bangkok Budget Stay,2800,budget
 INT01,Bangkok Comfort Hotel,4800,standard
 INT01,Bangkok Premium Stay,10500,premium
@@ -59,3 +77,15 @@ INT04,Kathmandu Premium Stay,7200,premium
 INT05,Kuala Lumpur Budget Stay,3000,budget
 INT05,Kuala Lumpur Comfort Hotel,5200,standard
 INT05,Kuala Lumpur Premium Stay,11000,premium
+INT06,Bali Budget Stay,2600,budget
+INT06,Bali Comfort Hotel,4500,standard
+INT06,Bali Premium Stay,10500,premium
+INT07,Maldives Budget Stay,5500,budget
+INT07,Maldives Comfort Hotel,11000,standard
+INT07,Maldives Premium Stay,26000,premium
+INT08,Tokyo Budget Stay,6800,budget
+INT08,Tokyo Comfort Hotel,12500,standard
+INT08,Tokyo Premium Stay,28000,premium
+INT09,Paris Budget Stay,7500,budget
+INT09,Paris Comfort Hotel,14000,standard
+INT09,Paris Premium Stay,32000,premium

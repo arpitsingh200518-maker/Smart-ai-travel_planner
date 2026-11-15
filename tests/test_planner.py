@@ -28,8 +28,8 @@ class PlannerTests(unittest.TestCase):
         request.update(updates)
         return validate_request(request)
 
-    def test_loads_twenty_destinations(self):
-        self.assertEqual(len(self.frames["destinations"]), 20)
+    def test_loads_all_destinations(self):
+        self.assertEqual(len(self.frames["destinations"]), 30)
 
     def test_invalid_budget_is_rejected(self):
         with self.assertRaises(ValueError):

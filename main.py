@@ -62,10 +62,8 @@ def print_costs(costs):
     trans_range = costs.get("transport_range_str", f"₹{costs['transport']:,}")
     total_range = costs.get("total_range_str", f"₹{costs['total']:,}")
     flight_info = f"flight from {origin}"
-    if dur: flight_info += f" ({dur}, {dist} km)"
+    if dur: flight_info += f" ({dur})"
     print(f"    Estimated total: {total_range} | {flight_info}: {trans_range} ({flight_range}/seat), stay: ₹{costs['accommodation']:,}, food: ₹{costs['food']:,}, activities: ₹{costs['activities']:,}")
-    if costs.get("flight_search_url"):
-        print(f"    Live Flights: {costs['flight_search_url']}")
     print(f"    Accommodation assumption: {costs['rooms']} room(s), {costs['nights']} night(s), cheapest listed option: {costs['hotel_name']}")
 
 def main():

@@ -412,7 +412,7 @@ class TravelPlannerApp(tk.Tk):
             font=self.small_font, fill=TEXT_SECONDARY, anchor="w"
         )
         self._t_badge = self.planner_canvas.create_text(
-            0, 0, text="Full dataset · 20 destinations",
+            0, 0, text="Full dataset · 30 destinations",
             font=self.small_font, fill=ACCENT_RED, anchor="e"
         )
 
@@ -1093,7 +1093,7 @@ class TravelPlannerApp(tk.Tk):
             tk.Label(costs_inner, text=total_range, bg=GLASS_BG, fg=color,
                      font=("Segoe UI", 11, "bold")).grid(row=1, column=4, sticky="e", padx=4)
 
-            # Row 4: Hotel info + Flight per-person range badge + Select button
+            # Row 4: Hotel info + Flight fare range badge + Select button
             row4 = tk.Frame(content, bg=GLASS_BG)
             row4.pack(fill="x", pady=(10, 0))
 
@@ -1101,20 +1101,10 @@ class TravelPlannerApp(tk.Tk):
                      fg=TEXT_MUTED, font=self.small_font).pack(side="left")
 
             if flight_pp_range:
-                fare_lbl = tk.Label(row4, text=f"✈️ Flights: {flight_pp_range}/seat", bg=GLASS_BG,
+                fare_txt = f"✈️ Flight: {flight_pp_range}/seat ({flight_dur})" if flight_dur else f"✈️ Flight: {flight_pp_range}/seat"
+                fare_lbl = tk.Label(row4, text=fare_txt, bg=GLASS_BG,
                                     fg=ACCENT_CYAN, font=("Segoe UI", 8, "bold"))
-                fare_lbl.pack(side="left", padx=(12, 0))
-
-            flight_search_url = c.get("flight_search_url") or f"https://www.google.com/travel/flights?q=Flights+from+{flight_origin}+to+{d['name']}"
-            btn_txt = f" ✈️ Live Flights ({flight_dur}) " if flight_dur else " ✈️ Live Flights "
-            flight_btn = tk.Button(
-                row4, text=btn_txt, font=("Segoe UI", 8, "bold"),
-                bg=GLASS_INNER, fg=TEXT_SECONDARY, activebackground=ACCENT_RED,
-                activeforeground="#ffffff", relief="flat", bd=0, padx=8, pady=4,
-                cursor="hand2", command=lambda u=flight_search_url: webbrowser.open(u)
-            )
-            flight_btn.pack(side="left", padx=(10, 0))
-            self._bind_hover(flight_btn, ACCENT_RED, GLASS_INNER)
+                fare_lbl.pack(side="left", padx=(14, 0))
 
             select_btn = tk.Button(
                 row4, text="  Select → Itinerary & Map  ", font=("Segoe UI", 10, "bold"),
@@ -1279,7 +1269,7 @@ class TravelPlannerApp(tk.Tk):
             "domestic and international trips using local\n"
             "datasets, preference matching, budget constraints,\n"
             "itinerary generation and interactive maps.\n\n"
-            "20 destinations · 60 hotels · 120 attractions\n\n"
+            "30 destinations · 90 hotels · 180 attractions\n\n"
             "Prices are illustrative estimates.\n"
             "Verify all travel details independently.")
 

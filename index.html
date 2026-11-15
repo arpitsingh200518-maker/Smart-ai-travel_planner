@@ -686,7 +686,7 @@ input, select { font-family: inherit; }
           <h2 class="section-title" style="margin-bottom:8px;">Where should we go?</h2>
           <p class="section-sub">Fill in your trip details below. Results use the full destination, hotel and attraction datasets with budget estimation and recommendation scoring.</p>
         </div>
-        <span class="planner-tag">Full Dataset · 20 Destinations</span>
+        <span class="planner-tag">Full Dataset · 30 Destinations</span>
       </div>
 
       <form id="tripForm">
@@ -800,7 +800,7 @@ input, select { font-family: inherit; }
 
 <script>
 // ============================================================
-// DATA — All 20 destinations, 60 hotels, 120 attractions from CSV
+// DATA — All 30 destinations, 90 hotels, 180 attractions from CSV
 // ============================================================
 const DESTINATIONS = [
   {destination_id:"IN01",name:"Goa",country:"India",region:"West India",scope:"domestic",climate:"tropical",interests:"beach,food,nightlife",group_types:"friends,couple,family",min_days:3,max_days:7,flight_price_min:3500,flight_price_max:9500,flight_duration:"2h 20m",transport_per_person:3500,hotel_price_per_room_night:3800,food_per_person_day:1100,activities_per_person:1500,latitude:15.2993,longitude:74.124,description:"Beaches, Portuguese heritage and coastal food."},
@@ -818,11 +818,21 @@ const DESTINATIONS = [
   {destination_id:"IN13",name:"Leh",country:"India",region:"Ladakh",scope:"domestic",climate:"cold",interests:"mountains,adventure,nature",group_types:"friends,couple",min_days:4,max_days:7,flight_price_min:4800,flight_price_max:13500,flight_duration:"1h 30m",transport_per_person:4800,hotel_price_per_room_night:4500,food_per_person_day:1000,activities_per_person:2000,latitude:34.1526,longitude:77.5771,description:"High-altitude landscapes, monasteries and road trips."},
   {destination_id:"IN14",name:"Mumbai",country:"India",region:"Maharashtra",scope:"domestic",climate:"tropical",interests:"food,architecture,nightlife",group_types:"friends,couple,solo",min_days:2,max_days:4,flight_price_min:3500,flight_price_max:10500,flight_duration:"2h 10m",transport_per_person:3500,hotel_price_per_room_night:5800,food_per_person_day:1300,activities_per_person:1200,latitude:19.076,longitude:72.8777,description:"Coastal promenades, street food and city landmarks."},
   {destination_id:"IN15",name:"Kaziranga",country:"India",region:"Assam",scope:"domestic",climate:"tropical",interests:"nature,wildlife,adventure",group_types:"family,friends,couple",min_days:3,max_days:5,flight_price_min:4500,flight_price_max:12500,flight_duration:"2h 30m",transport_per_person:4500,hotel_price_per_room_night:4000,food_per_person_day:950,activities_per_person:2200,latitude:26.5775,longitude:93.1711,description:"Wildlife safaris and biodiversity-rich landscapes."},
+  {destination_id:"IN16",name:"Ooty",country:"India",region:"Tamil Nadu",scope:"domestic",climate:"mild",interests:"mountains,nature,relaxation,food",group_types:"couple,family,friends",min_days:3,max_days:5,flight_price_min:3800,flight_price_max:9500,flight_duration:"2h 15m",transport_per_person:3800,hotel_price_per_room_night:3200,food_per_person_day:800,activities_per_person:1000,latitude:11.4102,longitude:76.6950,description:"Botanical gardens, tea estates, Nilgiri mountain railway and misty hills."},
+  {destination_id:"IN17",name:"Shimla",country:"India",region:"Himachal Pradesh",scope:"domestic",climate:"cold",interests:"mountains,nature,history,architecture",group_types:"family,couple,friends",min_days:2,max_days:5,flight_price_min:3000,flight_price_max:8000,flight_duration:"1h 10m",transport_per_person:3000,hotel_price_per_room_night:3400,food_per_person_day:850,activities_per_person:1100,latitude:31.1048,longitude:77.1734,description:"Colonial architecture, Mall Road, pine forests and snow peaks."},
+  {destination_id:"IN18",name:"Amritsar",country:"India",region:"Punjab",scope:"domestic",climate:"mild",interests:"history,culture,food,architecture",group_types:"family,couple,solo,friends",min_days:2,max_days:3,flight_price_min:2600,flight_price_max:7200,flight_duration:"1h 05m",transport_per_person:2600,hotel_price_per_room_night:2600,food_per_person_day:750,activities_per_person:700,latitude:31.6340,longitude:74.8723,description:"Golden Temple, historic Wagah border ceremony and famous Punjabi cuisine."},
+  {destination_id:"IN19",name:"Agra",country:"India",region:"Uttar Pradesh",scope:"domestic",climate:"hot",interests:"history,architecture,culture",group_types:"family,couple,solo",min_days:2,max_days:3,flight_price_min:2200,flight_price_max:6500,flight_duration:"0h 50m",transport_per_person:2200,hotel_price_per_room_night:2800,food_per_person_day:750,activities_per_person:1200,latitude:27.1767,longitude:78.0081,description:"Home to the Taj Mahal, Agra Fort, Fatehpur Sikri and Mughal heritage."},
+  {destination_id:"IN20",name:"Coorg",country:"India",region:"Karnataka",scope:"domestic",climate:"mild",interests:"nature,relaxation,food,adventure",group_types:"couple,friends,family",min_days:3,max_days:5,flight_price_min:3800,flight_price_max:9800,flight_duration:"2h 30m",transport_per_person:3800,hotel_price_per_room_night:3500,food_per_person_day:900,activities_per_person:1200,latitude:12.4244,longitude:75.7382,description:"Coffee plantations, Abbey Falls, mist-covered valleys and spice trails."},
+  {destination_id:"IN21",name:"Pondicherry",country:"India",region:"Puducherry",scope:"domestic",climate:"tropical",interests:"beach,culture,food,relaxation",group_types:"friends,couple,solo",min_days:2,max_days:4,flight_price_min:3600,flight_price_max:9200,flight_duration:"2h 20m",transport_per_person:3600,hotel_price_per_room_night:3200,food_per_person_day:950,activities_per_person:1000,latitude:11.9416,longitude:79.8083,description:"French quarter colonial villas, Promenade beach, cafes and Auroville."},
   {destination_id:"INT01",name:"Bangkok",country:"Thailand",region:"Southeast Asia",scope:"international",climate:"tropical",interests:"food,history,nightlife,shopping",group_types:"friends,couple,solo",min_days:3,max_days:5,flight_price_min:9500,flight_price_max:24000,flight_duration:"4h 15m",transport_per_person:9500,hotel_price_per_room_night:4800,food_per_person_day:1400,activities_per_person:2000,latitude:13.7563,longitude:100.5018,description:"Street food, temples, markets and city life."},
   {destination_id:"INT02",name:"Singapore",country:"Singapore",region:"Southeast Asia",scope:"international",climate:"tropical",interests:"architecture,food,family,shopping",group_types:"family,couple,friends",min_days:3,max_days:5,flight_price_min:12500,flight_price_max:32000,flight_duration:"5h 30m",transport_per_person:12500,hotel_price_per_room_night:13500,food_per_person_day:2500,activities_per_person:3800,latitude:1.3521,longitude:103.8198,description:"Modern architecture, gardens and family attractions."},
   {destination_id:"INT03",name:"Dubai",country:"United Arab Emirates",region:"Middle East",scope:"international",climate:"hot",interests:"architecture,shopping,adventure",group_types:"family,couple,friends",min_days:3,max_days:5,flight_price_min:11000,flight_price_max:28000,flight_duration:"3h 50m",transport_per_person:11000,hotel_price_per_room_night:11500,food_per_person_day:2200,activities_per_person:3500,latitude:25.2048,longitude:55.2708,description:"Modern landmarks, desert experiences and shopping."},
   {destination_id:"INT04",name:"Kathmandu",country:"Nepal",region:"South Asia",scope:"international",climate:"mild",interests:"mountains,history,culture",group_types:"friends,couple,solo",min_days:3,max_days:5,flight_price_min:6500,flight_price_max:16000,flight_duration:"1h 40m",transport_per_person:6500,hotel_price_per_room_night:3500,food_per_person_day:900,activities_per_person:1200,latitude:27.7172,longitude:85.324,description:"Historic squares, temples and Himalayan culture."},
-  {destination_id:"INT05",name:"Kuala Lumpur",country:"Malaysia",region:"Southeast Asia",scope:"international",climate:"tropical",interests:"food,architecture,shopping,nature",group_types:"family,couple,friends",min_days:3,max_days:5,flight_price_min:10500,flight_price_max:26000,flight_duration:"5h 15m",transport_per_person:10500,hotel_price_per_room_night:5200,food_per_person_day:1300,activities_per_person:1800,latitude:3.139,longitude:101.6869,description:"City landmarks, food markets and nearby nature."}
+  {destination_id:"INT05",name:"Kuala Lumpur",country:"Malaysia",region:"Southeast Asia",scope:"international",climate:"tropical",interests:"food,architecture,shopping,nature",group_types:"family,couple,friends",min_days:3,max_days:5,flight_price_min:10500,flight_price_max:26000,flight_duration:"5h 15m",transport_per_person:10500,hotel_price_per_room_night:5200,food_per_person_day:1300,activities_per_person:1800,latitude:3.139,longitude:101.6869,description:"City landmarks, food markets and nearby nature."},
+  {destination_id:"INT06",name:"Bali",country:"Indonesia",region:"Southeast Asia",scope:"international",climate:"tropical",interests:"beach,nature,culture,relaxation,nightlife",group_types:"couple,friends,solo",min_days:4,max_days:8,flight_price_min:14000,flight_price_max:34000,flight_duration:"6h 30m",transport_per_person:14000,hotel_price_per_room_night:4500,food_per_person_day:1400,activities_per_person:2200,latitude:-8.4095,longitude:115.1889,description:"Lush rice terraces, volcanic temples, tropical beaches and vibrant culture."},
+  {destination_id:"INT07",name:"Maldives",country:"Maldives",region:"South Asia",scope:"international",climate:"tropical",interests:"beach,nature,relaxation,adventure",group_types:"couple,family",min_days:3,max_days:6,flight_price_min:12000,flight_price_max:29000,flight_duration:"3h 45m",transport_per_person:12000,hotel_price_per_room_night:11000,food_per_person_day:2200,activities_per_person:3500,latitude:4.1755,longitude:73.5093,description:"Turquoise lagoons, overwater villas, vibrant coral reefs and white sand atolls."},
+  {destination_id:"INT08",name:"Tokyo",country:"Japan",region:"East Asia",scope:"international",climate:"mild",interests:"architecture,culture,food,shopping,history",group_types:"family,friends,solo,couple",min_days:4,max_days:8,flight_price_min:26000,flight_price_max:65000,flight_duration:"7h 45m",transport_per_person:26000,hotel_price_per_room_night:12500,food_per_person_day:2800,activities_per_person:3600,latitude:35.6762,longitude:139.6503,description:"Neon skylines, ancient shrines, world-class gastronomy and pop culture."},
+  {destination_id:"INT09",name:"Paris",country:"France",region:"Europe",scope:"international",climate:"mild",interests:"architecture,history,culture,food,shopping",group_types:"couple,family,solo,friends",min_days:4,max_days:8,flight_price_min:28000,flight_price_max:72000,flight_duration:"8h 50m",transport_per_person:28000,hotel_price_per_room_night:14000,food_per_person_day:3200,activities_per_person:4000,latitude:48.8566,longitude:2.3522,description:"Eiffel Tower, Louvre Museum, romantic Seine river cruises and French cuisine."}
 ];
 
 const HOTELS = [
@@ -871,6 +881,24 @@ const HOTELS = [
   {destination_id:"IN15",hotel_name:"Kaziranga Budget Stay",price_per_room_night:2400,category:"budget"},
   {destination_id:"IN15",hotel_name:"Kaziranga Comfort Hotel",price_per_room_night:4000,category:"standard"},
   {destination_id:"IN15",hotel_name:"Kaziranga Premium Stay",price_per_room_night:7800,category:"premium"},
+  {destination_id:"IN16",hotel_name:"Ooty Budget Stay",price_per_room_night:1800,category:"budget"},
+  {destination_id:"IN16",hotel_name:"Ooty Comfort Hotel",price_per_room_night:3200,category:"standard"},
+  {destination_id:"IN16",hotel_name:"Ooty Premium Stay",price_per_room_night:6500,category:"premium"},
+  {destination_id:"IN17",hotel_name:"Shimla Budget Stay",price_per_room_night:1900,category:"budget"},
+  {destination_id:"IN17",hotel_name:"Shimla Comfort Hotel",price_per_room_night:3400,category:"standard"},
+  {destination_id:"IN17",hotel_name:"Shimla Premium Stay",price_per_room_night:7000,category:"premium"},
+  {destination_id:"IN18",hotel_name:"Amritsar Budget Stay",price_per_room_night:1500,category:"budget"},
+  {destination_id:"IN18",hotel_name:"Amritsar Comfort Hotel",price_per_room_night:2600,category:"standard"},
+  {destination_id:"IN18",hotel_name:"Amritsar Premium Stay",price_per_room_night:5500,category:"premium"},
+  {destination_id:"IN19",hotel_name:"Agra Budget Stay",price_per_room_night:1600,category:"budget"},
+  {destination_id:"IN19",hotel_name:"Agra Comfort Hotel",price_per_room_night:2800,category:"standard"},
+  {destination_id:"IN19",hotel_name:"Agra Premium Stay",price_per_room_night:6000,category:"premium"},
+  {destination_id:"IN20",hotel_name:"Coorg Budget Stay",price_per_room_night:2000,category:"budget"},
+  {destination_id:"IN20",hotel_name:"Coorg Comfort Hotel",price_per_room_night:3500,category:"standard"},
+  {destination_id:"IN20",hotel_name:"Coorg Premium Stay",price_per_room_night:7500,category:"premium"},
+  {destination_id:"IN21",hotel_name:"Pondicherry Budget Stay",price_per_room_night:1800,category:"budget"},
+  {destination_id:"IN21",hotel_name:"Pondicherry Comfort Hotel",price_per_room_night:3200,category:"standard"},
+  {destination_id:"IN21",hotel_name:"Pondicherry Premium Stay",price_per_room_night:6800,category:"premium"},
   {destination_id:"INT01",hotel_name:"Bangkok Budget Stay",price_per_room_night:2800,category:"budget"},
   {destination_id:"INT01",hotel_name:"Bangkok Comfort Hotel",price_per_room_night:4800,category:"standard"},
   {destination_id:"INT01",hotel_name:"Bangkok Premium Stay",price_per_room_night:10500,category:"premium"},
@@ -885,7 +913,19 @@ const HOTELS = [
   {destination_id:"INT04",hotel_name:"Kathmandu Premium Stay",price_per_room_night:7200,category:"premium"},
   {destination_id:"INT05",hotel_name:"Kuala Lumpur Budget Stay",price_per_room_night:3000,category:"budget"},
   {destination_id:"INT05",hotel_name:"Kuala Lumpur Comfort Hotel",price_per_room_night:5200,category:"standard"},
-  {destination_id:"INT05",hotel_name:"Kuala Lumpur Premium Stay",price_per_room_night:11000,category:"premium"}
+  {destination_id:"INT05",hotel_name:"Kuala Lumpur Premium Stay",price_per_room_night:11000,category:"premium"},
+  {destination_id:"INT06",hotel_name:"Bali Budget Stay",price_per_room_night:2600,category:"budget"},
+  {destination_id:"INT06",hotel_name:"Bali Comfort Hotel",price_per_room_night:4500,category:"standard"},
+  {destination_id:"INT06",hotel_name:"Bali Premium Stay",price_per_room_night:10500,category:"premium"},
+  {destination_id:"INT07",hotel_name:"Maldives Budget Stay",price_per_room_night:5500,category:"budget"},
+  {destination_id:"INT07",hotel_name:"Maldives Comfort Hotel",price_per_room_night:11000,category:"standard"},
+  {destination_id:"INT07",hotel_name:"Maldives Premium Stay",price_per_room_night:26000,category:"premium"},
+  {destination_id:"INT08",hotel_name:"Tokyo Budget Stay",price_per_room_night:6800,category:"budget"},
+  {destination_id:"INT08",hotel_name:"Tokyo Comfort Hotel",price_per_room_night:12500,category:"standard"},
+  {destination_id:"INT08",hotel_name:"Tokyo Premium Stay",price_per_room_night:28000,category:"premium"},
+  {destination_id:"INT09",hotel_name:"Paris Budget Stay",price_per_room_night:7500,category:"budget"},
+  {destination_id:"INT09",hotel_name:"Paris Comfort Hotel",price_per_room_night:14000,category:"standard"},
+  {destination_id:"INT09",hotel_name:"Paris Premium Stay",price_per_room_night:32000,category:"premium"}
 ];
 
 const ATTRACTIONS = [
@@ -1008,7 +1048,67 @@ const ATTRACTIONS = [
   {destination_id:"INT05",attraction_name:"Kuala Lumpur Market Visit",category:"shopping",estimated_cost_per_person:200,duration_hours:1.5,latitude:3.114,longitude:101.7119},
   {destination_id:"INT05",attraction_name:"Kuala Lumpur Architectural Landmark",category:"architecture",estimated_cost_per_person:300,duration_hours:2.0,latitude:3.139,longitude:101.6619},
   {destination_id:"INT05",attraction_name:"Kuala Lumpur Museum Visit",category:"history",estimated_cost_per_person:250,duration_hours:2.0,latitude:3.164,longitude:101.7119},
-  {destination_id:"INT05",attraction_name:"Kuala Lumpur Local Market",category:"shopping",estimated_cost_per_person:200,duration_hours:1.5,latitude:3.114,longitude:101.6619}
+  {destination_id:"INT05",attraction_name:"Kuala Lumpur Local Market",category:"shopping",estimated_cost_per_person:200,duration_hours:1.5,latitude:3.114,longitude:101.6619},
+  {destination_id:"IN16",attraction_name:"Ooty Botanical Gardens",category:"nature",estimated_cost_per_person:100,duration_hours:2.5,latitude:11.4190,longitude:76.7110},
+  {destination_id:"IN16",attraction_name:"Doddabetta Peak Viewpoint",category:"nature",estimated_cost_per_person:50,duration_hours:2.0,latitude:11.4010,longitude:76.7370},
+  {destination_id:"IN16",attraction_name:"Nilgiri Mountain Toy Train",category:"adventure",estimated_cost_per_person:300,duration_hours:3.0,latitude:11.4060,longitude:76.7030},
+  {destination_id:"IN16",attraction_name:"Ooty Lake & Boating",category:"nature",estimated_cost_per_person:250,duration_hours:2.0,latitude:11.4070,longitude:76.6870},
+  {destination_id:"IN16",attraction_name:"Tea Museum & Chocolate Factory",category:"food",estimated_cost_per_person:200,duration_hours:1.5,latitude:11.4140,longitude:76.7260},
+  {destination_id:"IN16",attraction_name:"Rose Garden Walk",category:"nature",estimated_cost_per_person:80,duration_hours:1.5,latitude:11.4030,longitude:76.7150},
+  {destination_id:"IN17",attraction_name:"The Ridge & Mall Road",category:"culture",estimated_cost_per_person:0,duration_hours:2.5,latitude:31.1044,longitude:77.1743},
+  {destination_id:"IN17",attraction_name:"Jakhoo Temple & Ropeway",category:"nature",estimated_cost_per_person:500,duration_hours:2.0,latitude:31.1011,longitude:77.1852},
+  {destination_id:"IN17",attraction_name:"Viceregal Lodge",category:"history",estimated_cost_per_person:200,duration_hours:2.0,latitude:31.1030,longitude:77.1415},
+  {destination_id:"IN17",attraction_name:"Kufri Snow Adventure Park",category:"adventure",estimated_cost_per_person:600,duration_hours:3.5,latitude:31.0979,longitude:77.2679},
+  {destination_id:"IN17",attraction_name:"Tara Devi Temple Forest Trail",category:"nature",estimated_cost_per_person:100,duration_hours:2.5,latitude:31.0664,longitude:77.1332},
+  {destination_id:"IN17",attraction_name:"Lakkar Bazaar Handicraft Walk",category:"shopping",estimated_cost_per_person:150,duration_hours:1.5,latitude:31.1065,longitude:77.1760},
+  {destination_id:"IN18",attraction_name:"Golden Temple (Harmandir Sahib)",category:"culture",estimated_cost_per_person:0,duration_hours:3.0,latitude:31.6200,longitude:74.8765},
+  {destination_id:"IN18",attraction_name:"Jallianwala Bagh Memorial",category:"history",estimated_cost_per_person:0,duration_hours:1.5,latitude:31.6206,longitude:74.8797},
+  {destination_id:"IN18",attraction_name:"Wagah Border Beating Retreat",category:"history",estimated_cost_per_person:0,duration_hours:3.5,latitude:31.6048,longitude:74.5731},
+  {destination_id:"IN18",attraction_name:"Partition Museum",category:"culture",estimated_cost_per_person:150,duration_hours:2.0,latitude:31.6247,longitude:74.8792},
+  {destination_id:"IN18",attraction_name:"Amritsari Kulcha Food Trail",category:"food",estimated_cost_per_person:400,duration_hours:2.0,latitude:31.6320,longitude:74.8730},
+  {destination_id:"IN18",attraction_name:"Gobindgarh Fort Light & Sound",category:"history",estimated_cost_per_person:300,duration_hours:2.5,latitude:31.6280,longitude:74.8620},
+  {destination_id:"IN19",attraction_name:"Taj Mahal Sunrise Visit",category:"architecture",estimated_cost_per_person:250,duration_hours:3.0,latitude:27.1751,longitude:78.0421},
+  {destination_id:"IN19",attraction_name:"Agra Fort",category:"history",estimated_cost_per_person:200,duration_hours:2.5,latitude:27.1795,longitude:78.0211},
+  {destination_id:"IN19",attraction_name:"Mehtab Bagh Sunset View",category:"nature",estimated_cost_per_person:100,duration_hours:1.5,latitude:27.1800,longitude:78.0425},
+  {destination_id:"IN19",attraction_name:"Fatehpur Sikri Royal Complex",category:"history",estimated_cost_per_person:300,duration_hours:3.5,latitude:27.0945,longitude:77.6679},
+  {destination_id:"IN19",attraction_name:"Mughal Street Food Trail",category:"food",estimated_cost_per_person:450,duration_hours:2.0,latitude:27.1720,longitude:78.0150},
+  {destination_id:"IN19",attraction_name:"Itmad-ud-Daulah Tomb",category:"architecture",estimated_cost_per_person:150,duration_hours:1.5,latitude:27.1929,longitude:78.0310},
+  {destination_id:"IN20",attraction_name:"Abbey Falls Nature Trail",category:"nature",estimated_cost_per_person:100,duration_hours:2.0,latitude:12.4540,longitude:75.7190},
+  {destination_id:"IN20",attraction_name:"Raja Seat Sunset Garden",category:"nature",estimated_cost_per_person:50,duration_hours:1.5,latitude:12.4180,longitude:75.7370},
+  {destination_id:"IN20",attraction_name:"Dubare Elephant Camp & Rafting",category:"adventure",estimated_cost_per_person:700,duration_hours:3.0,latitude:12.3680,longitude:75.9050},
+  {destination_id:"IN20",attraction_name:"Namdroling Monastery (Golden Temple)",category:"culture",estimated_cost_per_person:0,duration_hours:2.0,latitude:12.4530,longitude:75.9670},
+  {destination_id:"IN20",attraction_name:"Coffee Plantation & Spice Tour",category:"nature",estimated_cost_per_person:350,duration_hours:2.5,latitude:12.4350,longitude:75.7480},
+  {destination_id:"IN20",attraction_name:"Mandalpatti 4x4 Jeep Safari",category:"adventure",estimated_cost_per_person:800,duration_hours:3.5,latitude:12.5180,longitude:75.7020},
+  {destination_id:"IN21",attraction_name:"White Town French Quarter Walk",category:"architecture",estimated_cost_per_person:0,duration_hours:2.5,latitude:11.9325,longitude:79.8350},
+  {destination_id:"IN21",attraction_name:"Promenade Beachfront Sunset",category:"nature",estimated_cost_per_person:0,duration_hours:2.0,latitude:11.9340,longitude:79.8360},
+  {destination_id:"IN21",attraction_name:"Auroville & Matrimandir",category:"culture",estimated_cost_per_person:100,duration_hours:3.5,latitude:12.0070,longitude:79.8105},
+  {destination_id:"IN21",attraction_name:"Paradise Beach Ferry & Water Sports",category:"beach",estimated_cost_per_person:400,duration_hours:3.0,latitude:11.8720,longitude:79.8180},
+  {destination_id:"IN21",attraction_name:"French Cafe & Bakery Trail",category:"food",estimated_cost_per_person:550,duration_hours:2.0,latitude:11.9330,longitude:79.8320},
+  {destination_id:"IN21",attraction_name:"Sri Aurobindo Ashram",category:"culture",estimated_cost_per_person:0,duration_hours:1.5,latitude:11.9360,longitude:79.8340},
+  {destination_id:"INT06",attraction_name:"Ubud Tegallalang Rice Terrace",category:"nature",estimated_cost_per_person:400,duration_hours:2.5,latitude:-8.4340,longitude:115.2790},
+  {destination_id:"INT06",attraction_name:"Tanah Lot Sea Temple",category:"culture",estimated_cost_per_person:500,duration_hours:2.5,latitude:-8.6210,longitude:115.0868},
+  {destination_id:"INT06",attraction_name:"Uluwatu Sunset Temple & Kecak Dance",category:"culture",estimated_cost_per_person:800,duration_hours:3.0,latitude:-8.8290,longitude:115.0849},
+  {destination_id:"INT06",attraction_name:"Seminyak Beach & Sunset Club",category:"beach",estimated_cost_per_person:600,duration_hours:2.5,latitude:-8.6913,longitude:115.1578},
+  {destination_id:"INT06",attraction_name:"Sacred Monkey Forest Sanctuary",category:"nature",estimated_cost_per_person:450,duration_hours:2.0,latitude:-8.5190,longitude:115.2600},
+  {destination_id:"INT06",attraction_name:"Mount Batur Sunrise Trek",category:"adventure",estimated_cost_per_person:1500,duration_hours:4.5,latitude:-8.2420,longitude:115.3750},
+  {destination_id:"INT07",attraction_name:"Coral Reef Snorkeling Safari",category:"nature",estimated_cost_per_person:1800,duration_hours:3.0,latitude:4.1850,longitude:73.5200},
+  {destination_id:"INT07",attraction_name:"Sandbank Picnic & Lagoon Swim",category:"nature",estimated_cost_per_person:1200,duration_hours:3.5,latitude:4.2100,longitude:73.5400},
+  {destination_id:"INT07",attraction_name:"Sunset Dolphin Cruise",category:"adventure",estimated_cost_per_person:1500,duration_hours:2.5,latitude:4.1600,longitude:73.5000},
+  {destination_id:"INT07",attraction_name:"Scuba Diving Manta Ray Point",category:"adventure",estimated_cost_per_person:3500,duration_hours:4.0,latitude:4.2300,longitude:73.5600},
+  {destination_id:"INT07",attraction_name:"Local Island Culture Tour",category:"culture",estimated_cost_per_person:500,duration_hours:2.0,latitude:4.1750,longitude:73.5120},
+  {destination_id:"INT07",attraction_name:"Water Sports & Jet Ski Experience",category:"adventure",estimated_cost_per_person:2000,duration_hours:2.0,latitude:4.1900,longitude:73.5300},
+  {destination_id:"INT08",attraction_name:"Senso-ji Ancient Temple & Asakusa",category:"history",estimated_cost_per_person:0,duration_hours:2.5,latitude:35.7148,longitude:139.7967},
+  {destination_id:"INT08",attraction_name:"Shibuya Crossing & Hachiko Plaza",category:"culture",estimated_cost_per_person:0,duration_hours:2.0,latitude:35.6595,longitude:139.7005},
+  {destination_id:"INT08",attraction_name:"Shinjuku Gyoen National Garden",category:"nature",estimated_cost_per_person:300,duration_hours:2.5,latitude:35.6852,longitude:139.7101},
+  {destination_id:"INT08",attraction_name:"Akihabara Tech & Anime District",category:"shopping",estimated_cost_per_person:500,duration_hours:3.0,latitude:35.6984,longitude:139.7731},
+  {destination_id:"INT08",attraction_name:"Tsukiji Outer Food Market Tour",category:"food",estimated_cost_per_person:1200,duration_hours:2.5,latitude:35.6655,longitude:139.7708},
+  {destination_id:"INT08",attraction_name:"teamLab Planets Digital Art",category:"culture",estimated_cost_per_person:2200,duration_hours:2.5,latitude:35.6491,longitude:139.7898},
+  {destination_id:"INT09",attraction_name:"Eiffel Tower Summit & Trocadero",category:"architecture",estimated_cost_per_person:1800,duration_hours:3.0,latitude:48.8584,longitude:2.2945},
+  {destination_id:"INT09",attraction_name:"Louvre Museum Masterpieces Tour",category:"history",estimated_cost_per_person:1600,duration_hours:3.5,latitude:48.8606,longitude:2.3376},
+  {destination_id:"INT09",attraction_name:"Seine River Cruise at Sunset",category:"nature",estimated_cost_per_person:1100,duration_hours:2.0,latitude:48.8570,longitude:2.3400},
+  {destination_id:"INT09",attraction_name:"Montmartre & Sacre-Coeur Basilica",category:"culture",estimated_cost_per_person:0,duration_hours:2.5,latitude:48.8867,longitude:2.3431},
+  {destination_id:"INT09",attraction_name:"Champs-Elysees & Arc de Triomphe",category:"architecture",estimated_cost_per_person:900,duration_hours:2.0,latitude:48.8738,longitude:2.2950},
+  {destination_id:"INT09",attraction_name:"Latin Quarter Boulangerie & Bistro Trail",category:"food",estimated_cost_per_person:1500,duration_hours:2.0,latitude:48.8500,longitude:2.3450}
 ];
 
 // ============================================================
